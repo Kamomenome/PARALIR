@@ -41,7 +41,8 @@ p { margin: 0; }
 
 .frame { container-type: size; display: grid; place-items: center; min-height: 0; }
 /* The largest 4:3 box that fits both ways. */
-.picture { position: relative; width: min(100cqw, calc(100cqh * 4 / 3)); aspect-ratio: 4 / 3; }
+/* The largest box of the picture's shape that fits both ways (018 FR-1802; --aspect = width / height). */
+.picture { position: relative; width: min(100cqw, calc(100cqh * var(--aspect, 1.3333))); aspect-ratio: var(--aspect, 1.3333); }
 .picture canvas {
   display: block;
   width: 100%;

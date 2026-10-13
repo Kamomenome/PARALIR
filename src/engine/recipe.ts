@@ -54,6 +54,7 @@ export interface SpaceRecipeSource {
   engineId?: string;
   spaceParts?: { status: string; parts?: { version: typeof PARTS_VERSION; digest: string } } | null;
   spaceLassos?: [number, number][][];
+  output?: { width: number; height: number };
 }
 
 export function toSpaceRecipe(s: SpaceRecipeSource, app?: AppRecord): SpaceRecipe {
@@ -71,7 +72,7 @@ export function toSpaceRecipe(s: SpaceRecipeSource, app?: AppRecord): SpaceRecip
     seed: { seedInput: s.spaceSeeds.seedInput, rootSeed: s.spaceSeeds.rootSeed as Hex64 },
     controls: { ...s.spaceControls },
     // 'standard' is what the export does; 'supersample-3' in older recipes is still read (008 FR-817).
-    output: { width: 2400, height: 1800, format: 'png', qualityMode: 'standard' },
+    output: { width: s.output?.width ?? 2400, height: s.output?.height ?? 1800, format: 'png', qualityMode: 'standard' },
     parts: s.spaceParts?.status === 'ok' && s.spaceParts.parts ? { version: s.spaceParts.parts.version, digest: s.spaceParts.parts.digest } : null,
     lassos: s.spaceLassos?.length ? s.spaceLassos.map((l) => l.map(([u, v]) => [u, v] as [number, number])) : null,
     ...(app ? { app: { version: app.version, commit: app.commit } } : {}),
@@ -152,7 +153,7 @@ export function validateSpaceRecipe(r: any): string[] {
     for (const k of Object.keys(r.controls)) if (!(SPACE_CONTROL_KEYS as readonly string[]).includes(k)) e.push(`controls.${k}: 不明な項目です`);
   }
   const o = r.output;
-  if (!isObj(o) || !Number.isInteger(o.width) || !Number.isInteger(o.height) || o.format !== 'png' || !['standard', 'supersample-3'].includes(o.qualityMode)) {
+  if (!isObj(o) || !Number.isInteger(o.width) || !Number.isInteger(o.height) || !(o.width >= 1 && o.width <= 8192 && o.height >= 1 && o.height <= 8192) || o.format !== 'png' || !['standard', 'supersample-3'].includes(o.qualityMode)) {
     e.push('output: 形式が正しくありません');
   }
   return e;

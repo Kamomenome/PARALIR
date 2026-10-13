@@ -8,6 +8,7 @@ import { CURRENT_ENGINE, loadEngine, type EngineSeeds, type EngineWorld } from '
 import { buildSpaceSeedInput } from '../engine/space-v2/seeds';
 import { DEFAULT_SPACE_CONTROLS, type SpaceControls } from '../engine/space-v2/types';
 import type { LoadedSource } from './decode';
+import { EXPORT_SIZE, outputSize, type OutputSize } from '../engine/common/output';
 
 export interface SourceState {
   id: number;
@@ -30,6 +31,8 @@ export interface AppState {
   lastStep: string | null;
   /** The engine that composes and draws the work (009 FR-904): the current one, or a frozen one for an older recipe. */
   engineId: string;
+  /** The export's size: the photo's shape (018 FR-1801), or a recipe's own size (FR-1804). */
+  output: OutputSize;
   /** A new photo is shown as it is until the first action (011 FR-1101); the world is composed behind it all the same. */
   showing: 'photo' | 'world';
   /** Spatial mode (spec 003): its own sliders, the world fixed on screen (or 'auto'), seed and world. */
@@ -165,6 +168,7 @@ export function createInitialState(nowMs: number, timeZone: string): AppState {
     previous: null,
     lastStep: null,
     engineId: CURRENT_ENGINE,
+    output: { ...EXPORT_SIZE },
     showing: 'photo',
     spaceControls: { ...DEFAULT_SPACE_CONTROLS },
     spaceType: 'auto',
@@ -217,6 +221,8 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
     ...s,
     engineId,
     showing: 'world',
+    // The recipe's own size, so works of 4:3 days come back as they were (018 FR-1804).
+    output: { width: r.output.width, height: r.output.height },
     time: { ...r.time, resolution: 'exact' },
     variationIndex: r.variationIndex,
     spaceControls: { ...r.controls },
@@ -232,8 +238,8 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
  * (withSource follows). No world yet, so nothing can be saved or exported.
  */
 export function withPhoto(s: AppState, source: SourceState, time: TimeSnapshot = s.time): AppState {
-  // The artwork time is when the photo goes in (016 FR-1601).
-  return { ...s, source, time, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
+  // The artwork time is when the photo goes in (016 FR-1601); the picture takes the photo's shape (018 FR-1801).
+  return { ...s, source, time, output: outputSize(source.loaded.img.width / source.loaded.img.height), engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
 }
 
 /** A new photo starts a new work with the current engine: the one-step history is cleared. */

@@ -1,6 +1,6 @@
 import pkg from '../../package.json';
 
-/** The app's name (010 FR-1001) and version: shown as 「PARALIR ver 1.32」; the version is raised each time it is handed over. */
+/** The app's name (010 FR-1001) and version: shown as 「PARALIR ver 1.33」; the version is raised each time it is handed over. */
 export const APP_NAME = 'PARALIR';
 /** The name in file names: exports, recipes, the download version (010 FR-1002). */
 export const APP_FILE_NAME = 'paralir';

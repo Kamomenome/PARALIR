@@ -110,6 +110,9 @@ function refreshPanel() {
   ui.changePhoto.hidden = !state.source;
   ui.caption.hidden = !state.source;
   exportPanel.setEnabled(state.source !== null && world);
+  exportPanel.setSize(state.output);
+  // The picture's box takes the picture's shape (018 FR-1802); 4:3 before any photo.
+  ui.picture.style.setProperty('--aspect', state.source ? String(state.output.width / state.output.height) : String(4 / 3));
 }
 
 // Every action shows the world if the photo is still shown as it is (011 FR-1102).

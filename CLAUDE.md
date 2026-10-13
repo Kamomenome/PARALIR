@@ -21,7 +21,7 @@
 - 画像処理は端末内だけ。外部へ送らない（アプリは外部への通信を起動時に止める: `src/app/offline.ts`）
 - 利用者の写真は `samples/`・`out/`（git 対象外）にだけ置き、作業が終わったら途中の写真データは消す。`out/latest`・`out/liked` は残す
 - 気に入った絵は `out/liked/` に残し、再現できるようにする
-- 版は `package.json` の version（画面は「ver 1.32」）。利用者に渡すたびに上げる
+- 版は `package.json` の version（画面は「ver 1.33」）。利用者に渡すたびに上げる
 - 公開リポジトリは https://github.com/Kamomenome/PARALIR（`origin` の `main`）。`main` は写真を含まない履歴から始めた（2026-10-13、009 FR-923）。
   手元のブランチ `002-spatial-world` には実在の写真を含む古い履歴があるので、**push しない**。コミットのメールは GitHub の非公開用アドレス（このリポジトリの設定）
 - 配るのは Web 版だけ（`npm run build`、GitHub Pages）。HTML 1 枚の版（`npm run build:single`）は手元の確認用で公開しない。バックエンドは作らない（009 decision.md）

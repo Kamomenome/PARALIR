@@ -1,8 +1,6 @@
 import { APP_NAME, APP_VERSION } from '../app/version';
 import logoUrl from './brand/paralir-logo-1x.png';
 
-export const PREVIEW_W = 960;
-export const PREVIEW_H = 720;
 
 /** Small DOM helper: h('div', { class: 'x', 'data-testid': 'y' }, child...) */
 export function h<K extends keyof HTMLElementTagNameMap>(
@@ -46,7 +44,7 @@ export function buildLayout(root: HTMLElement): Layout {
   const notices = h('div', { class: 'notices', 'data-testid': 'notices', role: 'status' });
   const errors = h('div', { class: 'errors', 'data-testid': 'errors', role: 'alert' });
   const progress = h('progress', { class: 'progress', max: '1', value: '0', 'data-testid': 'progress', hidden: '' });
-  const canvas = h('canvas', { width: String(PREVIEW_W), height: String(PREVIEW_H), 'data-testid': 'preview', hidden: '' });
+  const canvas = h('canvas', { width: '960', height: '720', 'data-testid': 'preview', hidden: '' });
   const drop = h(
     'button',
     { class: 'drop', type: 'button', 'data-testid': 'drop' },

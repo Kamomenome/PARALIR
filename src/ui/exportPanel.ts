@@ -8,6 +8,8 @@ export interface ExportPanel {
   setRunning(running: boolean): void;
   setStatus(text: string): void;
   setEnabled(enabled: boolean): void;
+  /** The real size on the button (018 FR-1803). */
+  setSize(size: { width: number; height: number }): void;
 }
 
 export function buildExportPanel(): ExportPanel {
@@ -32,6 +34,7 @@ export function buildExportPanel(): ExportPanel {
       refresh();
     },
     setStatus: (t) => (status.textContent = t),
+    setSize: ({ width, height }) => (exportBtn.textContent = `画像を書き出す（${width}×${height}）`),
     setEnabled(e) {
       enabled = e;
       refresh();

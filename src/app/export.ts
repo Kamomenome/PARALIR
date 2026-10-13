@@ -1,4 +1,3 @@
-import { EXPORT_SIZE } from '../engine/common/output';
 import { APP_FILE_NAME } from './version';
 import type { RenderController } from './controller';
 import type { AppState } from './state';
@@ -35,7 +34,8 @@ export function jobFor(state: AppState, _kind: 'preview' | 'export', _W: number,
 export function startExport(controller: RenderController, state: AppState, onProgress: (f: number) => void): ExportHandle {
   const src = state.source;
   if (!src) throw new Error('写真がありません');
-  const { width: W, height: H } = EXPORT_SIZE;
+  // The photo's shape, or the recipe's size (018).
+  const { width: W, height: H } = state.output;
   const { jobId, promise } = controller.submit({ kind: 'export', sourceId: src.id, W, H, ...jobFor(state, 'export', W, H) }, (d, t) => onProgress(d / t));
   const done = promise.then(async (r) => {
     if (r.status === 'cancelled') return null;
