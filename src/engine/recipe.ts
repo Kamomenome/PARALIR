@@ -31,8 +31,10 @@ export interface SpaceRecipe {
   output: { width: number; height: number; format: 'png'; qualityMode: 'standard' | 'supersample-3' };
   /** Optional (004): absent in recipes saved before the AI parts. */
   parts?: PartsRecord | null;
-  /** Optional (005): the rough lasso, normalised photo coordinates. */
+  /** Optional (005): one rough lasso, normalised photo coordinates; written up to ver 1.32. */
   lasso?: [number, number][] | null;
+  /** Optional (013B FR-1310): every lasso of the work. */
+  lassos?: [number, number][][] | null;
   /** Optional (008): the app version and commit that saved it, so a refused work says where it can be opened. */
   app?: AppRecord;
 }
@@ -51,7 +53,7 @@ export interface SpaceRecipeSource {
   spaceType: string;
   engineId?: string;
   spaceParts?: { status: string; parts?: { version: typeof PARTS_VERSION; digest: string } } | null;
-  spaceLasso?: [number, number][] | null;
+  spaceLassos?: [number, number][][];
 }
 
 export function toSpaceRecipe(s: SpaceRecipeSource, app?: AppRecord): SpaceRecipe {
@@ -71,7 +73,7 @@ export function toSpaceRecipe(s: SpaceRecipeSource, app?: AppRecord): SpaceRecip
     // 'standard' is what the export does; 'supersample-3' in older recipes is still read (008 FR-817).
     output: { width: 2400, height: 1800, format: 'png', qualityMode: 'standard' },
     parts: s.spaceParts?.status === 'ok' && s.spaceParts.parts ? { version: s.spaceParts.parts.version, digest: s.spaceParts.parts.digest } : null,
-    lasso: s.spaceLasso ? s.spaceLasso.map(([u, v]) => [u, v] as [number, number]) : null,
+    lassos: s.spaceLassos?.length ? s.spaceLassos.map((l) => l.map(([u, v]) => [u, v] as [number, number])) : null,
     ...(app ? { app: { version: app.version, commit: app.commit } } : {}),
   };
 }
@@ -96,14 +98,15 @@ export function validateSpaceRecipe(r: any): string[] {
   }
   scan(r, 'recipe');
   const allowed = ['schemaVersion', 'engineVersion', 'prngVersion', 'analysisVersion', 'algorithms', 'worldType', 'source', 'time', 'variationIndex', 'seed', 'controls', 'output'];
-  for (const k of Object.keys(r)) if (!allowed.includes(k) && k !== 'parts' && k !== 'lasso' && k !== 'app') e.push(`${k}: 不明な項目です`);
+  for (const k of Object.keys(r)) if (!allowed.includes(k) && !['parts', 'lasso', 'lassos', 'app'].includes(k)) e.push(`${k}: 不明な項目です`);
   const app = r.app;
   const appOk = app === undefined || (isObj(app) && Object.keys(app).length === 2 && APP_VERSION_RE.test(app.version) && APP_COMMIT_RE.test(app.commit));
   if (!appOk) e.push('app: 形式が正しくありません（版と commit）');
   for (const k of allowed) if (!(k in r)) e.push(`${k}: ありません`);
-  if (r.lasso != null) {
-    const ok = Array.isArray(r.lasso) && r.lasso.length >= 3 && r.lasso.length <= 256 && r.lasso.every((p: unknown) => Array.isArray(p) && p.length === 2 && p.every((v) => typeof v === 'number' && v >= 0 && v <= 1));
-    if (!ok) e.push('lasso: 形式が正しくありません（0〜1 の点 3〜256 個）');
+  const lassoOk = (l: unknown) => Array.isArray(l) && l.length >= 3 && l.length <= 256 && l.every((p: unknown) => Array.isArray(p) && p.length === 2 && p.every((v) => typeof v === 'number' && v >= 0 && v <= 1));
+  if (r.lasso != null && !lassoOk(r.lasso)) e.push('lasso: 形式が正しくありません（0〜1 の点 3〜256 個）');
+  if (r.lassos != null && !(Array.isArray(r.lassos) && r.lassos.length >= 1 && r.lassos.length <= 16 && r.lassos.every(lassoOk))) {
+    e.push('lassos: 形式が正しくありません（囲み 1〜16 個、それぞれ 0〜1 の点 3〜256 個）');
   }
   if (r.parts != null && (!isObj(r.parts) || r.parts.version !== PARTS_VERSION || !/^[0-9a-f]{16}$/.test(r.parts.digest) || Object.keys(r.parts).length !== 2)) {
     e.push(`parts: 形式が正しくありません（版 ${PARTS_VERSION} と 16 桁の要約）`);

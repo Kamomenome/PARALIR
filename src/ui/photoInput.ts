@@ -1,5 +1,5 @@
 import { decodeFile } from '../app/decode';
-import { prepareSource, withPhoto, withSource } from '../app/state';
+import { prepareSource, settleMode, withPhoto, withSource } from '../app/state';
 import { snapshotNow, systemTimeZone } from '../engine/common/time/snapshot';
 import type { AppContext } from './context';
 import { showMessage } from './layout';
@@ -33,7 +33,8 @@ export function wirePhotoInput(ctx: AppContext): void {
       const looking = ctx.busy.start('ai');
       ctx.update(async (s) => {
         try {
-          return mine === latest && s.source === source ? await withSource(s, source) : s;
+          // The first photo settles on the drawn mode; a chosen mode stays for the next ones (013B FR-1311).
+          return mine === latest && s.source === source ? settleMode(await withSource(s, source)) : s;
         } finally {
           looking();
         }

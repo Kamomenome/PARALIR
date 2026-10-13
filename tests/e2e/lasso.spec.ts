@@ -37,7 +37,7 @@ test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで�
   const recipe = page.waitForEvent('download');
   await page.getByTestId('recipe-save').click();
   const saved = JSON.parse(readFileSync((await (await recipe).path())!, 'utf8'));
-  expect(saved.lasso.length).toBeGreaterThanOrEqual(3);
+  expect(saved.lassos[0].length).toBeGreaterThanOrEqual(3);
 
   await page.getByTestId('lasso-clear').click();
   await waitForPreview(page);

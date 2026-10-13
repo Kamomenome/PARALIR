@@ -18,7 +18,7 @@ const shown = async (page: Page) => {
 
 test('表記: テンプレート・入れ子・スライダーの名前・書き出し。門と闇と光はない（017 SC-1703）', async ({ page }) => {
   await withPhoto(page);
-  await expect(page.getByTestId('panel')).toContainText('テンプレート');
+  await expect(page.getByTestId('panel')).toContainText('モード');
   const options = await page.getByTestId('space-world').locator('option').allTextContents();
   expect(options.some((o) => o.startsWith('入れ子'))).toBe(true);
   for (const gone of ['自分で埋める', '門', '闇と光']) expect(options.some((o) => o.includes(gone)), gone).toBe(false);
@@ -34,7 +34,8 @@ test('テンプレートで効くスライダーと囲みだけが出る（017 F
   await page.getByTestId('space-world').selectOption('copies');
   await waitForPreview(page);
   expect(await shown(page)).toEqual(['light', 'size', 'darkness', 'featureInfluence']);
-  await expect(page.getByTestId('lasso-status')).toBeHidden();
+  // The lasso decides the subject in every template since 013B (FR-1309).
+  await expect(page.getByTestId('lasso-status')).toBeVisible();
   await page.getByTestId('space-world').selectOption('mosaic');
   await waitForPreview(page);
   expect(await shown(page)).toEqual(['count', 'featureInfluence']);

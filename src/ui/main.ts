@@ -98,7 +98,7 @@ function refreshPanel() {
   spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true);
   spacePanel.showParts(state.source ? state.spaceParts : null);
   spacePanel.showLasso(state.spaceRange);
-  lasso.draw(state.spaceLasso);
+  lasso.draw(state.spaceLassos);
   // Saving and exporting only once the world is on screen (011 FR-1103).
   const world = state.showing === 'world';
   recipePanel.setSaveEnabled(state.spaceWorld !== null && world);

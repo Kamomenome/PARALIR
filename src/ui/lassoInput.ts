@@ -8,39 +8,43 @@ import type { AppContext } from './context';
  * The overlay fills the picture's box, which always has the canvas's shape. Its line can be hidden while the
  * lasso keeps working (011 FR-1105); it is shown while drawing. The line is never part of an export.
  */
-export function wireLasso(ctx: AppContext, lassoWorks: () => boolean = () => true): { draw(lasso: Lasso | null): void; setOutline(visible: boolean): void } {
+export function wireLasso(ctx: AppContext, lassoWorks: () => boolean = () => true): { draw(lassos: Lasso[]): void; setOutline(visible: boolean): void } {
   const { ui } = ctx;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'lasso');
   svg.setAttribute('data-testid', 'lasso-overlay');
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-  svg.append(line);
   ui.picture.append(svg);
 
   let outline = true;
   const showLine = () => (svg.style.display = outline || dragging ? '' : 'none');
 
-  function draw(lasso: Lasso | null, open = false) {
+  /** Every lasso of the work, and the one being drawn (open, not closed yet). */
+  function draw(lassos: Lasso[], drawing: Lasso | null = null) {
     showLine();
     svg.setAttribute('viewBox', `0 0 ${ui.canvas.width} ${ui.canvas.height}`);
     const img = ctx.state().source?.loaded.img;
-    if (!lasso || !img) {
-      line.setAttribute('points', '');
-      return;
-    }
+    svg.replaceChildren();
+    if (!img) return;
     const f = frameOf(img, ui.canvas.width, ui.canvas.height);
-    const pts = lasso.map(([u, v]) => `${((u - f.u0) / f.du).toFixed(1)},${((v - f.v0) / f.dv).toFixed(1)}`);
-    if (!open && pts.length) pts.push(pts[0]);
-    line.setAttribute('points', pts.join(' '));
+    for (const [k, lasso] of [...lassos, ...(drawing ? [drawing] : [])].entries()) {
+      const pts = lasso.map(([u, v]) => `${((u - f.u0) / f.du).toFixed(1)},${((v - f.v0) / f.dv).toFixed(1)}`);
+      if (lasso !== drawing && pts.length) pts.push(pts[0]);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      line.setAttribute('points', pts.join(' '));
+      line.dataset.lasso = String(k);
+      svg.append(line);
+    }
   }
 
   let dragging: Lasso | null = null;
+  /** Shift held when the drag began: the lasso is added to those there are (013B FR-1310). */
+  let adding = false;
   /** Where the drag went on screen, to tell a loop from a click (008 FR-816). */
   let box: { x0: number; y0: number; x1: number; y1: number } | null = null;
   const end = () => {
     dragging = null;
     box = null;
-    draw(ctx.state().spaceLasso);
+    draw(adding ? ctx.state().spaceLassos : ctx.state().spaceLassos);
   };
   const toPhoto = (e: PointerEvent): [number, number] | null => {
     const img = ctx.state().source?.loaded.img;
@@ -59,6 +63,7 @@ export function wireLasso(ctx: AppContext, lassoWorks: () => boolean = () => tru
     const p = toPhoto(e);
     if (!p) return;
     dragging = [p];
+    adding = e.shiftKey;
     box = { x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY };
     showLine();
     ui.canvas.setPointerCapture(e.pointerId);
@@ -68,23 +73,25 @@ export function wireLasso(ctx: AppContext, lassoWorks: () => boolean = () => tru
     const p = toPhoto(e);
     if (p) dragging.push(p);
     box = { x0: Math.min(box.x0, e.clientX), y0: Math.min(box.y0, e.clientY), x1: Math.max(box.x1, e.clientX), y1: Math.max(box.y1, e.clientY) };
-    draw(dragging, true);
+    // A plain drag replaces the lassos, so only the new one is shown while drawing.
+    draw(adding ? ctx.state().spaceLassos : [], dragging);
   });
   ui.canvas.addEventListener('pointerup', () => {
     const pts = dragging;
     const b = box;
+    const add = adding;
     end();
     // A click, or a hand that barely moved, keeps the lasso there is.
     const tiny = !b || Math.hypot(b.x1 - b.x0, b.y1 - b.y0) < 0.01 * ui.canvas.getBoundingClientRect().width;
     if (!pts || pts.length < 3 || tiny) return;
     // A lasso on the photo as it is also shows the world (011 FR-1102).
-    ctx.update((s) => firstLook(s, (t) => setLasso(t, simplifyLasso(pts)), true));
+    ctx.update((s) => firstLook(s, (t) => setLasso(t, simplifyLasso(pts), add), true));
   });
   // A touch or pen taken over by the system leaves no loop behind.
   ui.canvas.addEventListener('pointercancel', end);
   ui.canvas.addEventListener('lostpointercapture', () => dragging && end());
   return {
-    draw: (lasso) => draw(lasso),
+    draw: (lassos) => draw(lassos),
     setOutline(visible) {
       outline = visible;
       showLine();

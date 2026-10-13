@@ -1,6 +1,6 @@
 import { saveBlob, workName } from '../app/export';
 import { checkRecipe } from '../app/recipeLoad';
-import { applySpaceRecipe } from '../app/state';
+import { applySpaceRecipe, settleMode } from '../app/state';
 import { APP_RECORD } from '../app/version';
 import { toSpaceRecipe } from '../engine/recipe';
 import type { AppContext } from './context';
@@ -34,7 +34,7 @@ export function wireRecipes(ctx: AppContext, panel: RecipePanel): void {
           panel.setStatus(['写真が替わったため、レシピを当てはめませんでした。もう一度読み込んでください'], 'error');
           return s;
         }
-        const next = await applySpaceRecipe(s, check.recipe, check.engineId);
+        const next = settleMode(await applySpaceRecipe(s, check.recipe, check.engineId));
         panel.setStatus(['レシピを読み込みました', ...check.messages]);
         return next;
       });

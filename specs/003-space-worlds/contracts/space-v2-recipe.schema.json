@@ -226,6 +226,30 @@
           "pattern": "^([0-9a-f]{7,40}(-dirty)?|unknown)$"
         }
       }
+    },
+    "lassos": {
+      "description": "Optional (013B FR-1310): every lasso of the work (several with Shift).",
+      "type": [
+        "array",
+        "null"
+      ],
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 256,
+        "items": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
     }
   }
 }

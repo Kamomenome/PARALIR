@@ -24,10 +24,10 @@
     ]
   ],
   "versions": {
-    "copies": "copies-v4",
-    "split": "split-v4",
+    "copies": "copies-v5",
+    "split": "split-v5",
     "mosaic": "mosaic-v3",
-    "echo": "echo-v1",
+    "echo": "echo-v2",
     "theme": "theme-v2",
     "atmosphere": "atmosphere-v2"
   },
@@ -211,6 +211,30 @@
       "variation": 5,
       "lasso": false,
       "rgbaSha256": "b25b38b137fe5b73f572b9627bab1d80fe28aabe55ea4f2d6b5a8903969665a1"
+    },
+    {
+      "world": "copies",
+      "variation": 0,
+      "lasso": true,
+      "rgbaSha256": "ae80d2ce83b73b18305cf077672a61a7cfb6357b673ba46681e74686b53a46ea"
+    },
+    {
+      "world": "split",
+      "variation": 0,
+      "lasso": true,
+      "rgbaSha256": "dbf3b8951000a84a1c06d06a2d2eb8e347a608539cadcf6dac2497611cbec404"
+    },
+    {
+      "world": "mosaic",
+      "variation": 0,
+      "lasso": true,
+      "rgbaSha256": "e5d0889cf5fb98f7f2deb2df1e1da50af63a4531ea8adf56ff84076212b46c58"
+    },
+    {
+      "world": "echo",
+      "variation": 0,
+      "lasso": true,
+      "rgbaSha256": "3298809cd47306312f148d943e41e7fb12137b98cad85d0e1bb14a0a0dd1be5a"
     },
     {
       "world": "theme",

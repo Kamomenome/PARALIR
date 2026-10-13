@@ -34,9 +34,9 @@ describe('ひとつ戻す undoes the last change (013 FR-1308, SC-1306)', () => 
     const s = await photo();
     expect((await restorePrevious(setSpaceType(s, 'mosaic'))).spaceType).toBe('auto');
     const lassoed = await setLasso(s, [[0.2, 0.2], [0.6, 0.2], [0.5, 0.7]]);
-    expect(lassoed.spaceLasso).not.toBeNull();
+    expect(lassoed.spaceLassos).toHaveLength(1);
     const back = await restorePrevious(lassoed);
-    expect(back.spaceLasso).toBeNull();
+    expect(back.spaceLassos).toHaveLength(0);
     expect(back.spaceRange).toBeNull();
   });
 

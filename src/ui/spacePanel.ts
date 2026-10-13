@@ -36,7 +36,7 @@ export interface SpacePanel {
   setOutline(visible: boolean): void;
 }
 
-const LASSO_HINT = '絵の上をドラッグすると、主題にしたいあたりを囲めます';
+const LASSO_HINT = '絵の上をドラッグすると、主役にしたいあたりを囲めます（Shift を押しながらで囲みを足せます）';
 
 /** The AI parts in a line (004 FR-408). */
 function partsLine(p: PartsResult | null): { state: string; text: string; digest: string } {
@@ -50,7 +50,8 @@ function partsLine(p: PartsResult | null): { state: string; text: string; digest
 
 /** Spatial-mode controls (spec 003): the world (おまかせ or fixed), the actions under it and five sliders that keep the seed. */
 export function buildSpacePanel(actions: HTMLElement): SpacePanel {
-  const select = h('select', { 'data-testid': 'space-world', id: 'space-world' }, h('option', { value: 'auto' }, 'おまかせ'), ...TYPES.map(([v, l]) => h('option', { value: v }, l)));
+  // No おまかせ (013B FR-1311): the modes only; the first photo comes with the drawn one selected.
+  const select = h('select', { 'data-testid': 'space-world', id: 'space-world' }, ...TYPES.map(([v, l]) => h('option', { value: v }, l)));
   const note = h('p', { class: 'muted', 'data-testid': 'world-note' });
   const sliders = new Map<keyof SpaceControls, { input: HTMLInputElement; out: HTMLOutputElement }>();
   const fns: ((p: Partial<SpaceControls>) => void)[] = [];
@@ -84,7 +85,7 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
   const root = h(
     'section',
     { 'data-testid': 'space-panel' },
-    h('div', { class: 'group world' }, h('label', { class: 'muted', for: 'space-world' }, 'テンプレート'), select, note),
+    h('div', { class: 'group world' }, h('label', { class: 'muted', for: 'space-world' }, 'モード'), select, note),
     h('div', { class: 'group' }, actions),
     h('div', { class: 'group sliders' }, ...groups.map((g) => g.el)),
   );
@@ -98,12 +99,13 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
     lassoWorks: () => lassoUsed,
     show(c, type, visible, seeded, hasSubject) {
       root.hidden = !visible;
-      const chosen = TYPES.find(([v]) => v === (type === 'auto' ? seeded : type));
-      (select.options[0] as HTMLOptionElement).textContent = seeded && chosen ? `おまかせ（${chosen[1]}）` : 'おまかせ';
-      note.textContent = chosen ? chosen[2] : '写真と作品日時からテンプレートを選びます';
+      // Before any photo (or while it settles) the seed's mode, if any, is the one shown.
+      const shownType = type === 'auto' ? (seeded ?? TYPES[0][0]) : type;
+      const chosen = TYPES.find(([v]) => v === shownType);
+      note.textContent = chosen ? chosen[2] : '';
       // A frozen engine's world that is no longer offered still shows its name (017).
-      if (type !== 'auto' && ![...select.options].some((o) => o.value === type)) select.append(h('option', { value: type }, `${type}（以前の版）`));
-      select.value = type;
+      if (![...select.options].some((o) => o.value === shownType)) select.append(h('option', { value: shownType }, `${shownType}（以前の版）`));
+      select.value = shownType;
       // Only the sliders that change this template (017 FR-1704), under their headings (FR-1709).
       const def = worldOf(type === 'auto' ? (seeded ?? '') : type);
       const works = (k: keyof SpaceControls) => k === 'featureInfluence' || !def || (def.controls as readonly string[]).includes(k);
@@ -131,8 +133,8 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
       lassoText.textContent = !range
         ? LASSO_HINT
         : range.source === 'lasso+ai'
-          ? '囲み: AI が認識した輪郭を主題にしています'
-          : '囲み: 囲んだ形のまま主題にしています（AI が合う物を見つけられませんでした）';
+          ? '囲み: AI が認識した輪郭を主役にしています（Shift で足せます）'
+          : '囲み: 囲んだ形のまま主役にしています（AI が合う物を見つけられませんでした）';
       hasRange = !!range;
       lassoClear.hidden = !lassoUsed || !range;
       lassoOutline.hidden = !lassoUsed || !range;

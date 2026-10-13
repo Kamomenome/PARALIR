@@ -50,8 +50,10 @@ export async function drawWorldCells(engineId: string = CURRENT_ENGINE): Promise
     for (const world of engineEntry(engineId)!.worldTypes) cells.push({ world, variation, lasso: false, rgbaSha256: await draw(setSpaceType(s, world)) });
     s = await nextWorld(s);
   }
-  const lassoed = await setLasso(setSpaceType(v0, 'theme'), WORLD_PIN.lasso);
-  cells.push({ world: 'theme', variation: 0, lasso: true, rgbaSha256: await draw(lassoed) });
+  // With a lasso: the theme for every engine; every world for the current one, where the lasso is the subject (013B FR-1309).
+  const lassoWorlds = engineId === CURRENT_ENGINE ? engineEntry(engineId)!.worldTypes : ['theme'];
+  const lassoed = await setLasso(v0, WORLD_PIN.lasso);
+  for (const world of lassoWorlds) cells.push({ world, variation: 0, lasso: true, rgbaSha256: await draw(setSpaceType(lassoed, world)) });
   return cells;
 }
 

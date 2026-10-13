@@ -39,8 +39,8 @@ export interface AppState {
   spaceWorld: EngineWorld | null;
   /** What the on-device AI saw in the photo (004); null until the spatial mode first needs it. */
   spaceParts: PartsResult | null;
-  /** A rough lasso over the preview and the range it gives (005 FR-504); null when none. */
-  spaceLasso: Lasso | null;
+  /** Rough lassos over the picture (005 FR-504; several with Shift, 013B FR-1310) and the one range they give; none: []. */
+  spaceLassos: Lasso[];
   spaceRange: ThemeRange | null;
 }
 
@@ -78,27 +78,41 @@ export function useLassoCutter(c: LassoCutter | null): void {
   lassoCutter = c;
 }
 
-/** Sets (or, with null, clears) the lasso; its range: the AI candidate it circles, else the lasso (005 FR-504). */
-export async function setLasso(s: AppState, lasso: Lasso | null): Promise<AppState> {
-  return applyLasso({ ...s, ...remember(s, 'lasso') }, lasso);
+/**
+ * Sets the lasso (null: clears them all); `add` (Shift) adds it to those there are (013B FR-1310). Each lasso's range is
+ * the AI candidate it circles, else the lasso itself (005 FR-504); the work's range is all of them together.
+ */
+export async function setLasso(s: AppState, lasso: Lasso | null, add = false): Promise<AppState> {
+  const lassos = !lasso || lasso.length < 3 ? [] : add ? [...s.spaceLassos, lasso] : [lasso];
+  return applyLassos({ ...s, ...remember(s, 'lasso') }, lassos);
 }
 
-async function applyLasso(s: AppState, lasso: Lasso | null): Promise<AppState> {
-  if (!lasso || lasso.length < 3 || !s.source) return { ...s, spaceLasso: null, spaceRange: null };
-  const pr = await partsFor(s.source);
+async function rangeOf(s: AppState, lasso: Lasso): Promise<ThemeRange> {
+  const source = s.source!;
+  const pr = await partsFor(source);
   const parts = pr.status === 'ok' ? pr.parts : null;
   let cuts: Uint8Array[] = [];
   if (parts && lassoCutter) {
     try {
-      cuts = await lassoCutter(s.source, lassoHints(lasso));
+      cuts = await lassoCutter(source, lassoHints(lasso));
     } catch {
       cuts = [];
     }
   }
-  const { width, height } = s.source.loaded.img;
+  const { width, height } = source.loaded.img;
   const k = 320 / Math.max(width, height);
-  const spaceRange = lassoRange(lasso, parts, cuts, parts?.w ?? Math.max(1, Math.round(width * k)), parts?.h ?? Math.max(1, Math.round(height * k)));
-  return { ...s, spaceLasso: lasso, spaceRange };
+  return lassoRange(lasso, parts, cuts, parts?.w ?? Math.max(1, Math.round(width * k)), parts?.h ?? Math.max(1, Math.round(height * k)));
+}
+
+async function applyLassos(s: AppState, lassos: Lasso[]): Promise<AppState> {
+  if (!lassos.length || !s.source) return { ...s, spaceLassos: [], spaceRange: null };
+  const ranges: ThemeRange[] = [];
+  for (const l of lassos) ranges.push(await rangeOf(s, l));
+  // One range: every lasso's, together (the largest value at each point).
+  const mask = Uint8Array.from(ranges[0].mask);
+  for (const r of ranges.slice(1)) for (let i = 0; i < mask.length; i++) mask[i] = Math.max(mask[i], r.mask[i]);
+  const spaceRange: ThemeRange = { w: ranges[0].w, h: ranges[0].h, mask, source: ranges.some((r) => r.source === 'lasso+ai') ? 'lasso+ai' : 'lasso' };
+  return { ...s, spaceLassos: lassos, spaceRange };
 }
 
 /** The parts of a photo, made once per loaded photo. */
@@ -122,7 +136,7 @@ export interface Step {
   variationIndex: number;
   spaceControls: SpaceControls;
   spaceType: string;
-  spaceLasso: Lasso | null;
+  spaceLassos: Lasso[];
   spaceRange: ThemeRange | null;
 }
 
@@ -131,7 +145,7 @@ const stepOf = (s: AppState): Step => ({
   variationIndex: s.variationIndex,
   spaceControls: { ...s.spaceControls },
   spaceType: s.spaceType,
-  spaceLasso: s.spaceLasso,
+  spaceLassos: s.spaceLassos,
   spaceRange: s.spaceRange,
 });
 
@@ -157,7 +171,7 @@ export function createInitialState(nowMs: number, timeZone: string): AppState {
     spaceSeeds: null,
     spaceWorld: null,
     spaceParts: null,
-    spaceLasso: null,
+    spaceLassos: [],
     spaceRange: null,
   };
 }
@@ -209,7 +223,8 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
     spaceType: r.worldType,
     ...remember(s, 'recipe'),
   });
-  return applyLasso(next, r.lasso ?? null);
+  // Several lassos since 013B; one `lasso` in older recipes.
+  return applyLassos(next, r.lassos ?? (r.lasso ? [r.lasso] : []));
 }
 
 /**
@@ -218,12 +233,12 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
  */
 export function withPhoto(s: AppState, source: SourceState, time: TimeSnapshot = s.time): AppState {
   // The artwork time is when the photo goes in (016 FR-1601).
-  return { ...s, source, time, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLasso: null, spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
+  return { ...s, source, time, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
 }
 
 /** A new photo starts a new work with the current engine: the one-step history is cleared. */
 export async function withSource(s: AppState, source: SourceState): Promise<AppState> {
-  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLasso: null, spaceRange: null });
+  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null });
 }
 
 /** Seed-changing transition that remembers where it came from. */
@@ -239,6 +254,14 @@ export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Pro
   if (s.showing === 'world') return fn(s);
   const shown: AppState = { ...s, showing: 'world' };
   return apply ? fn(shown) : shown;
+}
+
+/**
+ * No おまかせ (013B FR-1311): a work still drawing the seed's choice ('auto', the first photo or an old recipe) settles on
+ * that mode, so it is the one selected and 写真に合わせる強さ never swaps it. Not a step to undo.
+ */
+export function settleMode(s: AppState): AppState {
+  return s.spaceType === 'auto' && s.spaceWorld ? { ...s, spaceType: s.spaceWorld.type } : s;
 }
 
 /** 「元の画像を表示」: the photo as it is, every setting kept (017 FR-1705); 「反映」 (firstLook) shows the picture again. */
@@ -257,5 +280,5 @@ export async function restorePrevious(s: AppState): Promise<AppState> {
   const p = s.previous;
   const back = { ...s, time: p.time, variationIndex: p.variationIndex, spaceControls: { ...p.spaceControls }, spaceType: p.spaceType, previous: null, lastStep: null };
   // The lasso's range came with it; nothing to cut again.
-  return { ...(await reseed(back)), spaceLasso: p.spaceLasso, spaceRange: p.spaceRange };
+  return { ...(await reseed(back)), spaceLassos: p.spaceLassos, spaceRange: p.spaceRange };
 }

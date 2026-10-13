@@ -92,7 +92,8 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, c
 export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeatures, c: SpaceControls, W: number, H: number, type: WorldType = w.type, quality = 0.4, parts: PhotoParts | null = null, range: ThemeRange | null = null): WorldRender {
   const def = WORLDS.find((d) => d.type === type);
   if (!def) throw new Error(`unknown world ${type}`);
-  const obj = mainObject(img, features, parts);
+  // The lasso's range is the subject in every way when there is one (013B FR-1309).
+  const obj = (range && rangeObject(img, range)) || mainObject(img, features, parts);
   return def.render({
     world: w,
     img,

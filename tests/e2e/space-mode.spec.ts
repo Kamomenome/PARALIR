@@ -23,8 +23,10 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await expect(page.getByTestId('space-panel')).toBeVisible();
   expect(await previewVariety(page)).toBeGreaterThan(50);
   const auto = await previewHash(page);
+  // No おまかせ: the drawn mode is the one selected (013B FR-1311).
+  const drawn = await page.getByTestId('space-world').inputValue();
 
-  // Fixing each world changes the picture; おまかせ comes back to the seed's world.
+  // Choosing each mode changes the picture; the drawn one comes back to the first picture.
   const seen = new Set<string>([auto]);
   for (const t of ['copies', 'split', 'mosaic']) {
     await page.getByTestId('space-world').selectOption(t);
@@ -32,7 +34,7 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
     seen.add(await previewHash(page));
   }
   expect(seen.size).toBeGreaterThanOrEqual(3);
-  await page.getByTestId('space-world').selectOption('auto');
+  await page.getByTestId('space-world').selectOption(drawn);
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(auto);
 
@@ -46,7 +48,7 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await page.getByTestId('space-control-darkness').fill('0.5');
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(copies);
-  await page.getByTestId('space-world').selectOption('auto');
+  await page.getByTestId('space-world').selectOption(drawn);
   await waitForPreview(page);
 
   // The same photo put in again at another time is another composition (別の世界 is gone 013, artwork time 016).
@@ -67,7 +69,7 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await page.getByTestId('recipe-save').click();
   const saved = JSON.parse(readFileSync((await (await recipe).path())!, 'utf8'));
   expect(saved.engineVersion).toBe('space-v2');
-  expect(saved.worldType).toBe('auto');
+  expect(saved.worldType).toBe(drawn);
 
   expect(external).toEqual([]);
 });
