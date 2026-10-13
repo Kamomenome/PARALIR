@@ -28,6 +28,8 @@ export interface AppState {
   previous: SeedKey | null;
   /** The engine that composes and draws the work (009 FR-904): the current one, or a frozen one for an older recipe. */
   engineId: string;
+  /** A new photo is shown as it is until the first action (011 FR-1101); the world is composed behind it all the same. */
+  showing: 'photo' | 'world';
   /** Spatial mode (spec 003): its own sliders, the world fixed on screen (or 'auto'), seed and world. */
   spaceControls: SpaceControls;
   spaceType: string;
@@ -129,6 +131,7 @@ export function createInitialState(nowMs: number, timeZone: string): AppState {
     source: null,
     previous: null,
     engineId: CURRENT_ENGINE,
+    showing: 'photo',
     spaceControls: { ...DEFAULT_SPACE_CONTROLS },
     spaceType: 'auto',
     spaceSeeds: null,
@@ -179,6 +182,7 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
   const next = await reseed({
     ...s,
     engineId,
+    showing: 'world',
     time: { ...r.time, resolution: 'exact' },
     variationIndex: r.variationIndex,
     spaceControls: { ...r.controls },
@@ -190,12 +194,22 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
 
 /** A new photo starts a new work with the current engine: the one-step history is cleared. */
 export async function withSource(s: AppState, source: SourceState): Promise<AppState> {
-  return reseed({ ...s, source, engineId: CURRENT_ENGINE, previous: null, spaceLasso: null, spaceRange: null });
+  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, spaceLasso: null, spaceRange: null });
 }
 
 /** Seed-changing transition that remembers where it came from. */
 async function changeSeed(s: AppState, patch: Partial<Pick<AppState, 'time' | 'variationIndex'>>): Promise<AppState> {
   return reseed({ ...s, ...patch, previous: s.source ? keyOf(s) : s.previous });
+}
+
+/**
+ * The first action on a new photo shows the world (011 FR-1102). 「別の世界」 then shows the current variation
+ * rather than skipping it; any other action (`apply`) also makes its change.
+ */
+export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Promise<AppState>, apply = false): Promise<AppState> {
+  if (s.showing === 'world') return fn(s);
+  const shown: AppState = { ...s, showing: 'world' };
+  return apply ? fn(shown) : shown;
 }
 
 /** 「別の世界」: same photo and time, next variation (R04). */

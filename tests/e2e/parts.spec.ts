@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { waitForPreview } from './helpers';
+import { waitForPreview, showWorld } from './helpers';
 
 // file:// opens the download version (009 FR-916).
 const dist = resolve('dist-single/index.html');
@@ -10,6 +10,7 @@ const dist = resolve('dist-single/index.html');
 async function spaceWithPhoto(page: Page) {
   await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
   await waitForPreview(page);
+  await showWorld(page);
 }
 
 test('file:// のビルドで AI が写真の部品を作り、同じ写真なら同じ部品、HTTP 通信 0 件（004 SC-404, SC-405）', async ({ page }) => {

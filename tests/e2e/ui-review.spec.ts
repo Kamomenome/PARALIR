@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { IMAGES, waitForPreview } from './helpers';
+import { IMAGES, waitForPreview, showWorld } from './helpers';
 
 const PHOTO = `${IMAGES}/gradient-64x48.png`;
 
@@ -8,6 +8,7 @@ async function withPhoto(page: Page) {
   await page.goto('/?ai=off');
   await page.setInputFiles('[data-testid="file-input"]', PHOTO);
   await waitForPreview(page);
+  await showWorld(page);
 }
 
 const rgb = (c: string) => c.match(/\d+(\.\d+)?/g)!.slice(0, 3).map(Number);

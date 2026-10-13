@@ -31,7 +31,7 @@ describe('works saved with an older engine open with that engine (009 FR-904, FR
   it('a new photo uses the current engine', async () => {
     const { s } = await photo();
     expect(s.engineId).toBe(CURRENT_ENGINE);
-    expect(jobFor(s, 'preview', 8, 6).mode).toBe(CURRENT_ENGINE);
+    expect(jobFor({ ...s, showing: 'world' }, 'preview', 8, 6).mode).toBe(CURRENT_ENGINE);
   });
 
   it("a recipe with a frozen engine's versions is accepted, applied with it, drawn with it, and saved again the same", async () => {

@@ -10,11 +10,14 @@ export interface ExportHandle {
   cancel(): void;
 }
 
+/** The photo itself, in the frame the worlds use (011 FR-1101). */
+export const PHOTO_MODE = 'photo';
+
 /** Render job description (shared by preview and export): the spatial world draws whole frames. */
 export function jobFor(state: AppState, _kind: 'preview' | 'export', _W: number, _H: number) {
   return {
-    // The work's engine draws it, in the page and in the worker alike (009 FR-905).
-    mode: state.engineId,
+    // The work's engine draws it, in the page and in the worker alike (009 FR-905); a new photo is shown as it is (011).
+    mode: state.showing === 'photo' ? PHOTO_MODE : state.engineId,
     payload: structuredClone({
       world: state.spaceWorld,
       controls: state.spaceControls,

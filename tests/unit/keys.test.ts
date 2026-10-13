@@ -17,11 +17,14 @@ describe('keyboard shortcuts (007 FR-708)', () => {
     expect(keyAction(key('z', { ctrlKey: true, shiftKey: true }), { tag: 'BODY' })).toBeNull();
   });
 
-  it('never takes keys from text, selects, sliders, buttons or summaries', () => {
-    for (const tag of ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'SUMMARY']) {
-      expect(keyAction(key(' '), { tag }), tag).toBeNull();
-      expect(keyAction(key('z', { ctrlKey: true }), { tag }), tag).toBeNull();
-    }
+  it('never takes Space from text, selects, sliders, buttons or summaries', () => {
+    for (const tag of ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'SUMMARY']) expect(keyAction(key(' '), { tag }), tag).toBeNull();
     expect(keyAction(key(' '), { tag: 'DIV', editable: true })).toBeNull();
+  });
+
+  it('takes Ctrl+Z from buttons and summaries (they have no undo), never from text fields or selects (011)', () => {
+    for (const tag of ['BUTTON', 'SUMMARY']) expect(keyAction(key('z', { ctrlKey: true }), { tag }), tag).toBe('restore');
+    for (const tag of ['INPUT', 'SELECT', 'TEXTAREA']) expect(keyAction(key('z', { ctrlKey: true }), { tag }), tag).toBeNull();
+    expect(keyAction(key('z', { ctrlKey: true }), { tag: 'DIV', editable: true })).toBeNull();
   });
 });

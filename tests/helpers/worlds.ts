@@ -31,7 +31,8 @@ export interface WorldCell {
 
 function draw(s: AppState): string {
   const { width: W, height: H } = WORLD_PIN;
-  const job = jobFor(s, 'preview', W, H);
+  // The world, not the photo shown as it is before the first action (011).
+  const job = jobFor({ ...s, showing: 'world' }, 'preview', W, H);
   const src = s.source!;
   const out = getRenderer(job.mode)!({ src: src.loaded.img, features: src.features, payload: job.payload, W, H });
   return createHash('sha256').update(out).digest('hex');

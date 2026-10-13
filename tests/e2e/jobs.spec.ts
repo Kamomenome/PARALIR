@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { IMAGES, previewHash, waitForPreview, openDetails } from './helpers';
+import { IMAGES, previewHash, waitForPreview, openDetails, showWorld } from './helpers';
 
 async function openWithFixedTime(page: Page) {
   await page.goto('/?ai=off');
@@ -8,6 +8,7 @@ async function openWithFixedTime(page: Page) {
   await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
+  await showWorld(page);
 }
 
 async function setSlider(page: Page, key: string, value: number) {

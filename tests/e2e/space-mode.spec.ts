@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { PNG } from 'pngjs';
-import { previewHash, previewVariety, waitForPreview, openDetails } from './helpers';
+import { previewHash, previewVariety, waitForPreview, openDetails, showWorld } from './helpers';
 
 test('空間モード（space-v2）: 世界・固定とおまかせ・スライダー・別の世界・書き出し・レシピ・外部通信 0 件（003）', async ({ page, baseURL }) => {
   test.setTimeout(300_000);
@@ -16,6 +16,7 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
   await waitForPreview(page);
+  await showWorld(page);
 
   await expect(page.getByTestId('space-panel')).toBeVisible();
   expect(await previewVariety(page)).toBeGreaterThan(50);

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { PNG } from 'pngjs';
-import { IMAGES, waitForPreview, openDetails } from './helpers';
+import { IMAGES, waitForPreview, openDetails, showWorld } from './helpers';
 
 async function open(page: Page) {
   await page.goto('/?ai=off');
@@ -10,6 +10,7 @@ async function open(page: Page) {
   await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
+  await showWorld(page);
 }
 
 async function slider(page: Page, key: string, v: number) {

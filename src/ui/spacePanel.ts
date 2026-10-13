@@ -28,6 +28,9 @@ export interface SpacePanel {
   /** The lasso's range (005): where it came from; the clear button is shown only with a lasso. */
   showLasso(range: ThemeRange | null): void;
   onLassoClear(fn: () => void): void;
+  /** 線を隠す／線を出す: the lasso's line only; the picture stays (011 FR-1105). */
+  onOutline(fn: () => void): void;
+  setOutline(visible: boolean): void;
 }
 
 const LASSO_HINT = '絵の上をドラッグすると、主題にしたいあたりを囲めます';
@@ -60,7 +63,11 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
   });
   const parts = h('span', { class: 'note', 'data-testid': 'parts-status', 'data-state': 'pending' });
   const lassoText = h('span', { class: 'note', 'data-testid': 'lasso-status', 'data-source': 'none' }, LASSO_HINT);
-  const lassoClear = h('button', { class: 'small', 'data-testid': 'lasso-clear', hidden: '' }, '囲みを消す');
+  // Undoing the lasso's effect and hiding its line are two things (011 FR-1105).
+  const lassoClear = h('button', { class: 'small', 'data-testid': 'lasso-clear', hidden: '' }, '囲みを解除');
+  const lassoOutline = h('button', { class: 'small', 'data-testid': 'lasso-outline', hidden: '' }, '線を隠す');
+  const outlineFns: (() => void)[] = [];
+  lassoOutline.addEventListener('click', () => outlineFns.forEach((f) => f()));
   const clearFns: (() => void)[] = [];
   lassoClear.addEventListener('click', () => clearFns.forEach((f) => f()));
   const root = h(
@@ -75,7 +82,7 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
   select.addEventListener('change', () => typeFns.forEach((f) => f(select.value)));
   return {
     root,
-    captionItems: [parts, lassoText, lassoClear],
+    captionItems: [parts, lassoText, lassoOutline, lassoClear],
     show(c, type, visible, seeded, hasSubject) {
       root.hidden = !visible;
       select.value = type;
@@ -102,8 +109,11 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
           ? '囲み: AI が認識した輪郭を主題にしています'
           : '囲み: 囲んだ形のまま主題にしています（AI が合う物を見つけられませんでした）';
       lassoClear.hidden = !range;
+      lassoOutline.hidden = !range;
     },
     onLassoClear: (f) => clearFns.push(f),
+    onOutline: (f) => outlineFns.push(f),
+    setOutline: (visible) => (lassoOutline.textContent = visible ? '線を隠す' : '線を出す'),
     showParts(p) {
       const l = partsLine(p);
       parts.dataset.state = l.state;

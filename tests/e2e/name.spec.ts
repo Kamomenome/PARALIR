@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { previewVariety, waitForPreview } from './helpers';
+import { previewVariety, waitForPreview, showWorld } from './helpers';
 
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version.split('.').slice(0, 2).join('.');
 
@@ -19,6 +19,7 @@ test('PARALIR: 名前と版（010 SC-1001）、開いたら空間モードだけ
 
   await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
   await waitForPreview(page);
+  await showWorld(page);
   await expect(page.getByTestId('space-panel')).toBeVisible();
   await expect(page.getByTestId('space-world')).toBeVisible();
   expect(await previewVariety(page)).toBeGreaterThan(50);
