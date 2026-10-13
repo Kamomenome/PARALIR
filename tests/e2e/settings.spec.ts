@@ -42,7 +42,9 @@ test('技術的な表示は閉じて始まり、AI の結果・作品日時・se
   await expect(tech).toHaveJSProperty('open', false);
   await tech.locator(':scope > summary').click();
   await expect(tech.getByTestId('parts-status')).toBeVisible();
-  for (const word of ['作品日時', 'seed', 'space-v2', 'mosaic-v2']) await expect(tech).toContainText(word);
+  for (const word of ['作品日時', 'seed', 'space-v2']) await expect(tech).toContainText(word);
+  // The drawing's versions, whatever they are now.
+  await expect(tech).toContainText(/mosaic-v\d+/);
   // Technical lines are no longer under the picture (FR-1604).
   await expect(page.locator('.caption [data-testid="parts-status"]')).toHaveCount(0);
 

@@ -2,6 +2,7 @@ import type { Rgb3 } from '../../shared/color';
 import type { RgbImage } from '../../../common/image/normalize';
 import { clip } from '../../../common/math';
 import { cleanPlate, frameOf, framePhoto, regionBox, regionMask, rng, toRgba } from '../../shared/inplace';
+import { fillHole, holeOf } from './fill';
 import type { PhotoObject } from '../../shared/object';
 import { mipSampler } from '../../shared/photo';
 import { drawsFrom } from '../../draws';
@@ -165,8 +166,11 @@ export function renderMosaic(
   base: Rgb3 | null = null,
 ): { rgba: Uint8ClampedArray; objects: Float32Array } {
   const { tiles, region } = mosaicLayout(p, obj, img, W, H, c.count);
-  // The ground: the photo without the subject; in the theme world (005), the Phase 9 picture.
-  const out = base ?? cleanPlate(framePhoto(img, W, H), region, W, H, obj.source === 'estimate' ? 0.05 : 0.25);
+  // The ground: the photo without the subject, its hole filled with rectangles of the photo (015 FR-1504);
+  // in the theme world (005), the Phase 9 picture.
+  const cut = obj.source === 'estimate' ? 0.05 : 0.25;
+  const photo = framePhoto(img, W, H);
+  const out = base ?? fillHole(photo, holeOf(region, W, H, cut), cleanPlate(framePhoto(img, W, H), region, W, H, cut), p.seed, W, H).out;
   const objects = new Float32Array(W * H);
   const f = frameOf(img, W, H);
   const sample = mipSampler(img);

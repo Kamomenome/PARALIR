@@ -157,7 +157,7 @@ const fromBytes = (rgba: Uint8ClampedArray): Rgb3 => {
   return c;
 };
 
-const LABELS = ['今の絵（なめらかに塗る）', 'A 穴を作らない', 'B 穴を長方形で埋める', 'C 塗りに模様を足す', 'D1 ぼけた所にコラージュ（穴だけ）', 'D2 ぼけた所にコラージュ（元のボケも）'];
+const LABELS = ['今のアプリの絵', 'A 穴を作らない', 'B 穴を長方形で埋める', 'C 塗りに模様を足す', 'D1 ぼけた所にコラージュ（穴だけ）', 'D2 ぼけた所にコラージュ（元のボケも）'];
 
 /** One photo: a sheet with a row per count (ふつう 0.5, 多い 1.0), six ways per row. */
 (window as any).__sheet = async (name: string, b64: string) => {

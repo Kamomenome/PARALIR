@@ -26,7 +26,7 @@
   "versions": {
     "copies": "copies-v4",
     "split": "split-v4",
-    "mosaic": "mosaic-v2",
+    "mosaic": "mosaic-v3",
     "echo": "echo-v1",
     "theme": "theme-v2",
     "atmosphere": "atmosphere-v2"
@@ -48,7 +48,7 @@
       "world": "mosaic",
       "variation": 0,
       "lasso": false,
-      "rgbaSha256": "3393d49348d23c2f44d9cfedb70704315b4eb9665bb6c9cc06d97eda3bbec52f"
+      "rgbaSha256": "eaeb7a0128216d85dd22bab25aee344dc7ab7cc78cc1bd37e28374671ef27901"
     },
     {
       "world": "echo",
@@ -78,7 +78,7 @@
       "world": "mosaic",
       "variation": 1,
       "lasso": false,
-      "rgbaSha256": "6a5f723fae7f1936109c71f410c9a72b097d006bf64c7a1be6a24cda55bdea66"
+      "rgbaSha256": "a86fc7b34612eb32bc0be0f874f8972c15b0ea43e7ebe1b38757643f03afe1c1"
     },
     {
       "world": "echo",
@@ -108,7 +108,7 @@
       "world": "mosaic",
       "variation": 2,
       "lasso": false,
-      "rgbaSha256": "1d5e3b6f09740214d66b622130191c998fadb13c19dc96c33737feca73370e2e"
+      "rgbaSha256": "ede948fb622f78bf65b1796a06734ded0950626d8da376f351864b1deb8c6479"
     },
     {
       "world": "echo",
@@ -138,7 +138,7 @@
       "world": "mosaic",
       "variation": 3,
       "lasso": false,
-      "rgbaSha256": "18b0b771a4326c963ddbc30a4945be4a9ce16f06001a6c48b9d8187efc6fc233"
+      "rgbaSha256": "be5711ef0478b61abaaa4df0dbcd978914927d0c5d97441813609373b49eb8c9"
     },
     {
       "world": "echo",
@@ -168,7 +168,7 @@
       "world": "mosaic",
       "variation": 4,
       "lasso": false,
-      "rgbaSha256": "ff61c64c6dc793b810a8c0c0ba4070110b7f92bc74751ad03c19e9d75a195f46"
+      "rgbaSha256": "e16039ae0935b1dc160f27f696273033b1ced4b6cde353cd8397006574706ad0"
     },
     {
       "world": "echo",
@@ -198,7 +198,7 @@
       "world": "mosaic",
       "variation": 5,
       "lasso": false,
-      "rgbaSha256": "71eede5550472c41d6186cf03561a2f7155eb74a60773989b782a2569790d2a6"
+      "rgbaSha256": "c64f8fd15fe0053c8f89a4278896349195caa1b41c4eae9208f44c5aa38bcbb3"
     },
     {
       "world": "echo",
