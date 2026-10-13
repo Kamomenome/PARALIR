@@ -29,8 +29,6 @@ export interface Engine {
   seeds(seedInput: SeedInput): Promise<EngineSeeds>;
   compose(seeds: EngineSeeds, features: ImageFeatures, controls: SpaceControls, img: RgbImage, parts: PhotoParts | null): Promise<EngineWorld>;
   render(world: EngineWorld, img: RgbImage, features: ImageFeatures, controls: SpaceControls, W: number, H: number, type?: string, quality?: number, parts?: PhotoParts | null, range?: ThemeRange | null): { rgba: Uint8ClampedArray };
-  /** How a lasso gives its range (019 FR-1915): 'inside' cuts the AI's candidate to the lasso; absent, the candidate whole (up to ver 1.33). */
-  lassoRule?: 'inside';
 }
 
 /** An engine in the list: known by its versions without loading it; frozen ones load only when a work needs them. */
