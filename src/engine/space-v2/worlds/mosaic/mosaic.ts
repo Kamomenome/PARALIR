@@ -90,14 +90,18 @@ export function mosaicLayout(p: MosaicParams, obj: PhotoObject, img: RgbImage, W
   const region = regionMask(obj, img, W, H);
   const box = regionBox(region, W, H) ?? [W * 0.3, H * 0.3, W * 0.7, H * 0.7];
   const pad = 0.04 * H;
-  const minSide = Math.max(2, 0.022 * H);
+  // 長方形の数 (019 FR-1916): from few large rectangles (0) to many small ones (1); at 0.5 as in 003.
+  const more = 2 * (count - 0.5);
+  const minSide = Math.max(2, 0.022 * H * 2 ** -more);
+  const fewest = Math.round(36 * 4 ** more);
+  const stop = Math.min(0.9, p.stop * 3 ** -more);
   const at = (x: number, y: number) => region[clip(Math.floor(y), 0, H - 1) * W + clip(Math.floor(x), 0, W - 1)];
   // A small subject is cut deeper, so it always has enough rectangles.
   let rand = rng(p.seed);
   let kept: [number, number, number, number][] = [];
-  for (let extra = 0; extra < 5 && kept.length < 36; extra++) {
+  for (let extra = 0; extra < 5 && kept.length < fewest; extra++) {
     rand = rng(p.seed);
-    kept = cutBox(box, pad, p.depth + Math.round((count - 0.5) * 2) + extra, p.stop / (1 + extra), minSide, rand).filter(([x0, y0, x1, y1]) => {
+    kept = cutBox(box, pad, p.depth + Math.round(2 * more) + extra, stop / (1 + extra), minSide, rand).filter(([x0, y0, x1, y1]) => {
       let s = 0;
       for (let k = 0; k < 9; k++) s += at(x0 + (x1 - x0) * ((k % 3) + 0.5) / 3, y0 + (y1 - y0) * (Math.floor(k / 3) + 0.5) / 3);
       return s / 9 >= 0.3;

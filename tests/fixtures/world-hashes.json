@@ -26,9 +26,9 @@
   "versions": {
     "copies": "copies-v5",
     "split": "split-v5",
-    "mosaic": "mosaic-v3",
+    "mosaic": "mosaic-v4",
     "echo": "echo-v2",
-    "theme": "theme-v2",
+    "theme": "theme-v3",
     "atmosphere": "atmosphere-v2"
   },
   "cells": [

@@ -1,6 +1,6 @@
 // Slider comparison for 019 (FR-1912): each mode of each photo, every slider the mode shows at 0, 0.5 and 1 (the others
 // as they start), drawn by the app itself in a headless browser with its on-device AI. Nothing leaves the device.
-// Usage: npx tsx tools/slider-sheet.ts photo.jpg [photo2.jpg ...] --out out/019
+// Usage: npx tsx tools/slider-sheet.ts photo.jpg [photo2.jpg ...] --out out/019 [--modes mosaic,theme]
 // Writes <out>/<photo>/<mode>-<slider>-<value>.png and <out>/index.html to look at them side by side.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
@@ -11,7 +11,10 @@ import { WORLDS } from '../src/engine/space-v2/worlds';
 const args = process.argv.slice(2);
 const outAt = args.indexOf('--out');
 const out = outAt >= 0 ? args[outAt + 1] : 'out/019';
-const photos = args.filter((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1));
+const modesAt = args.indexOf('--modes');
+const modes = modesAt >= 0 ? args[modesAt + 1].split(',') : null;
+const photos = args.filter((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1) && (modesAt < 0 || i !== modesAt + 1));
+const worlds = WORLDS.filter((w) => !modes || modes.includes(w.type));
 const VALUES = [0, 0.5, 1];
 const NAMES: Record<string, string> = { light: '光の強さ', lightShape: '光の形', darkness: '背景の暗さ', size: '主役の大きさ', count: '長方形の数' };
 const PORT = 5197;
@@ -54,7 +57,7 @@ try {
   for (const file of photos) {
     const name = basename(file, extname(file));
     mkdirSync(join(out, name), { recursive: true });
-    for (const w of WORLDS) {
+    for (const w of worlds) {
       const t0 = Date.now();
       // A fresh work for each mode, so every slider starts where the mode starts it (光の形: the drawn shape).
       await page.clock.setFixedTime(new Date('2026-10-13T03:00:00Z'));
@@ -92,7 +95,7 @@ try {
 }
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
-const sections = WORLDS.map((w) => {
+const sections = worlds.map((w) => {
   const mine = rows.filter((r) => r.mode === w.type);
   if (!mine.length) return '';
   const sliders = [...new Set(mine.map((r) => r.key))].map((key) => {

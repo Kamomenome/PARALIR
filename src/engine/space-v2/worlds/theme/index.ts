@@ -5,7 +5,7 @@ export const theme: WorldDef<'theme', ThemeParams> = {
   type: 'theme',
   label: '主題',
   note: '崩した全体の中に、元写真の一部をそのまま残す',
-  version: 'theme-v2',
+  version: 'theme-v3',
   controls: ['lightShape', 'count'],
   shapeOf: (w) => w.theme.shape,
   usesRange: true,

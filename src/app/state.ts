@@ -104,7 +104,9 @@ async function rangeOf(s: AppState, lasso: Lasso): Promise<ThemeRange> {
   }
   const { width, height } = source.loaded.img;
   const k = 320 / Math.max(width, height);
-  return lassoRange(lasso, parts, cuts, parts?.w ?? Math.max(1, Math.round(width * k)), parts?.h ?? Math.max(1, Math.round(height * k)));
+  // The work's engine says how (019 FR-1915): works of ver 1.33 and before keep the range they were made with.
+  const inside = (await loadEngine(s.engineId)).lassoRule === 'inside';
+  return lassoRange(lasso, parts, cuts, parts?.w ?? Math.max(1, Math.round(width * k)), parts?.h ?? Math.max(1, Math.round(height * k)), inside);
 }
 
 async function applyLassos(s: AppState, lassos: Lasso[]): Promise<AppState> {

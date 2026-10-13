@@ -35,7 +35,7 @@ describe("the rectangles' hole is filled with rectangles of the photo, not smoot
     }
   });
 
-  it('the rectangles world has its new version', () => {
-    expect(SPACE_ALGORITHM_VERSIONS.mosaic).toBe('mosaic-v3');
+  it('the rectangles world has a version after the smooth fill (mosaic-v3 in 015, raised since)', () => {
+    expect(['mosaic-v1', 'mosaic-v2']).not.toContain(SPACE_ALGORITHM_VERSIONS.mosaic);
   });
 });

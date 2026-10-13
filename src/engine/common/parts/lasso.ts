@@ -101,12 +101,35 @@ export function simplifyLasso(points: Lasso): Lasso {
   return Array.from({ length: LASSO_MAX_POINTS }, (_, k) => inPhoto[Math.floor(k * step)]);
 }
 
+/** The mask grown by r cells (a square reach), for the margin around a lasso. */
+function grown(m: Uint8Array, w: number, h: number, r: number): Uint8Array {
+  const across = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0;
+      for (let k = Math.max(0, x - r); k <= Math.min(w - 1, x + r) && !v; k++) v = m[y * w + k];
+      across[y * w + x] = v;
+    }
+  }
+  const out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let v = 0;
+      for (let k = Math.max(0, y - r); k <= Math.min(h - 1, y + r) && !v; k++) v = across[k * w + x];
+      out[y * w + x] = v;
+    }
+  }
+  return out;
+}
+
 /**
  * The range from a lasso (005 FR-504): the AI's candidates — the person's head (face skin and hair), the whole
  * person, the cut-outs made for the photo and those made at the lasso's hints — chosen by chooseCircled; the lasso
- * itself when none fits or there are no parts. On the parts' grid (or w × h without parts).
+ * itself when none fits or there are no parts. On the parts' grid (or w × h without parts). `inside` (019 FR-1915,
+ * the current engine's rule): the candidate gives the outline only, cut to the lasso grown by 2 % of the long side, so
+ * nothing outside the lasso becomes the subject; without it the candidate is taken whole (the engines up to ver 1.33).
  */
-export function lassoRange(lasso: Lasso, parts: PhotoParts | null, lassoCuts: Uint8Array[], w = parts?.w ?? 160, h = parts?.h ?? 120): ThemeRange {
+export function lassoRange(lasso: Lasso, parts: PhotoParts | null, lassoCuts: Uint8Array[], w = parts?.w ?? 160, h = parts?.h ?? 120, inside = false): ThemeRange {
   const aim = lassoMask(lasso, w, h);
   if (!parts) return { w, h, mask: aim, source: 'lasso' };
   const candidates: Uint8Array[] = [];
@@ -117,5 +140,8 @@ export function lassoRange(lasso: Lasso, parts: PhotoParts | null, lassoCuts: Ui
   candidates.push(...parts.cuts, ...lassoCuts);
   const bits = (m: Uint8Array) => Uint8Array.from(m, (v) => (v > 127 ? 1 : 0));
   const k = chooseCircled(bits(aim), candidates.map(bits));
-  return k >= 0 ? { w, h, mask: candidates[k], source: 'lasso+ai' } : { w, h, mask: aim, source: 'lasso' };
+  if (k < 0) return { w, h, mask: aim, source: 'lasso' };
+  if (!inside) return { w, h, mask: candidates[k], source: 'lasso+ai' };
+  const reach = grown(aim, w, h, Math.max(1, Math.round(0.02 * Math.max(w, h))));
+  return { w, h, mask: Uint8Array.from(candidates[k], (v, i) => (reach[i] ? v : 0)), source: 'lasso+ai' };
 }
