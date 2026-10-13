@@ -4,7 +4,7 @@ import { engineEntry, loadEngine } from '../../src/engine/engines';
 import { currentVersions, drawWorldCells } from '../helpers/worlds';
 
 // The frozen engines draw exactly what they drew when they were frozen (009 FR-905, 017 SC-1701).
-describe.each(['space-v2-1', 'space-v2-2'])('the frozen engine %s', (engineId) => {
+describe.each(['space-v2-1', 'space-v2-2', 'space-v2-3'])('the frozen engine %s', (engineId) => {
   it('the list says what the engine is (its versions and worlds), so recipes find it without loading it', async () => {
     const engine = await loadEngine(engineId);
     expect(engine.id).toBe(engineId);
