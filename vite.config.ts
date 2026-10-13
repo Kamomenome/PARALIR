@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig, type Plugin } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { gitCommit } from './tools/commit';
@@ -35,7 +36,12 @@ function contentSecurityPolicy(kind: keyof typeof CSP): Plugin {
   return {
     name: 'paralir-csp',
     apply: 'build',
-    transformIndexHtml: (html) => html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP[kind].join('; ')}" />`),
+    transformIndexHtml: (html) => {
+      const out = html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP[kind].join('; ')}" />`);
+      // The single file reads nothing beside it: its icons go inside it too (014).
+      if (kind !== 'single') return out;
+      return out.replace(/href="\.\/(brand\/[^"]+\.png)"/g, (_m, f: string) => `href="data:image/png;base64,${readFileSync(`public/${f}`).toString('base64')}"`);
+    },
   };
 }
 

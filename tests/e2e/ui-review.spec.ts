@@ -69,26 +69,26 @@ test('写真の入れ方: 選ぶ前は「写真を選ぶ」、ドロップで入
   await expect(page.getByText('dropped.png')).toHaveCount(1);
 });
 
-test('パネルの順番: 世界 → 別の世界 → スライダー → 書き出し、作品日時は詳しい設定の中（007 SC-703）', async ({ page }) => {
+test('パネルの順番: 世界 → ひとつ戻す → スライダー → 書き出し、レシピの読み込みは詳しい設定の中（007 SC-703）', async ({ page }) => {
   await withPhoto(page);
   const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
-  const order = [await y('space-world'), await y('next-world'), await y('space-control-light'), await y('export')];
+  const order = [await y('space-world'), await y('restore-previous'), await y('space-control-light'), await y('export')];
   expect([...order].sort((a, b) => a - b)).toEqual(order);
-  await expect(page.getByTestId('time-input')).toBeHidden();
-  await expect(page.getByTestId('details')).toContainText('作品日時');
+  await expect(page.getByTestId('recipe-load')).toBeHidden();
   await page.getByTestId('details').locator(':scope > summary').click();
-  await expect(page.getByTestId('time-input')).toBeVisible();
   await expect(page.getByTestId('recipe-load')).toBeVisible();
+  // The artwork time is no longer set on screen (016 FR-1601).
+  await expect(page.getByTestId('time-input')).toHaveCount(0);
 });
 
 test('絵についての案内は絵の下で控えめ、言葉は使う人の言葉（007 SC-704）', async ({ page }) => {
   await withPhoto(page);
   const pic = (await page.getByTestId('preview').boundingBox())!;
-  for (const id of ['parts-status', 'lasso-status']) {
-    const box = (await page.getByTestId(id).boundingBox())!;
-    expect(box.y, id).toBeGreaterThanOrEqual(pic.y + pic.height);
-    expect(parseFloat(await css(page, id, 'font-size')), id).toBeLessThanOrEqual(13);
-  }
+  // The lasso's hint stays under the picture; what the AI saw moved to 技術的な表示 (016 FR-1604).
+  const box = (await page.getByTestId('lasso-status').boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(pic.y + pic.height);
+  expect(parseFloat(await css(page, 'lasso-status', 'font-size'))).toBeLessThanOrEqual(13);
+  expect(parseFloat(await css(page, 'parts-status', 'font-size'))).toBeLessThanOrEqual(13);
   await expect(page.getByText('直前のレシピ')).toHaveCount(0);
   await expect(page.getByTestId('restore-previous')).toContainText('ひとつ戻す');
   const options = await page.getByTestId('space-world').locator('option').allTextContents();
@@ -102,7 +102,7 @@ test('画面の部品は無彩色、控えめな文字も読める（007 SC-705�
     const [r, g, b] = rgb(c);
     return r === g && g === b;
   };
-  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['next-world', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-light', 'accent-color']] as const) {
+  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['restore-previous', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-light', 'accent-color']] as const) {
     const c = await css(page, id, prop);
     expect(grey(c), `${id} ${prop} ${c}`).toBe(true);
   }
@@ -118,20 +118,19 @@ test('手応え: バーは描いている間だけ、絵の上は十字、キャ
   await expect(page.getByTestId('export-cancel')).toBeHidden();
 });
 
-test('キーボード: Space で別の世界、Ctrl+Z でひとつ戻す、選択枠が見える（007 SC-707）', async ({ page }) => {
+test('キーボード: Ctrl+Z でひとつ戻す、選択枠が見える（007 SC-707, 013）', async ({ page }) => {
   await withPhoto(page);
-  await expect(page.getByTestId('variation')).toHaveText('0');
-  await page.locator('body').press(' ');
+  const slider = page.getByTestId('space-control-light');
+  await slider.evaluate((el: HTMLInputElement) => {
+    el.value = '0.9';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   await waitForPreview(page);
-  await expect(page.getByTestId('variation')).toHaveText('1');
   await page.locator('body').press('Control+z');
   await waitForPreview(page);
-  await expect(page.getByTestId('variation')).toHaveText('0');
-  // Space on a slider stays the slider's.
-  await page.getByTestId('space-control-light').focus();
-  await page.keyboard.press(' ');
-  await expect(page.getByTestId('variation')).toHaveText('0');
+  await expect(slider).toHaveValue('0.5');
   // A button chosen with the keyboard shows a ring of 2px or more.
+  await slider.focus();
   await page.keyboard.press('Shift+Tab');
   const focused = await page.evaluate(() => {
     const s = getComputedStyle(document.activeElement!);

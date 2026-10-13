@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { PNG } from 'pngjs';
-import { previewHash, previewVariety, waitForPreview, openDetails, showWorld } from './helpers';
+import { previewHash, previewVariety, waitForPreview, showWorld } from './helpers';
+
+
+// The artwork time is when the photo goes in (016 FR-1601): the browser's clock and time zone are fixed instead.
+test.use({ timezoneId: 'Asia/Tokyo' });
+test.beforeEach(async ({ page }) => page.clock.setFixedTime(new Date('2026-10-11T03:00:00Z')));
 
 test('空間モード（space-v2）: 世界・固定とおまかせ・スライダー・別の世界・書き出し・レシピ・外部通信 0 件（003）', async ({ page, baseURL }) => {
   test.setTimeout(300_000);
@@ -11,9 +16,6 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
     if (/^https?:/.test(r.url()) && new URL(r.url()).origin !== origin) external.push(r.url());
   });
   await page.goto('/');
-  await openDetails(page);
-  await page.getByTestId('timezone-select').selectOption('Asia/Tokyo');
-  await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
   await waitForPreview(page);
   await showWorld(page);
@@ -41,8 +43,13 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(auto);
 
-  await page.getByTestId('next-world').click();
+  // The same photo put in again at another time is another composition (別の世界 is gone 013, artwork time 016).
+  await page.clock.setFixedTime(new Date('2026-10-12T00:30:00Z'));
+  await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
+  // Wait for the new photo itself, not the picture still on screen.
+  await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'photo');
   await waitForPreview(page);
+  await showWorld(page);
   expect(await previewHash(page)).not.toBe(auto);
 
   const download = page.waitForEvent('download', { timeout: 240_000 });

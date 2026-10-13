@@ -4,8 +4,8 @@ import { keyAction } from '../../src/ui/keys';
 const key = (k: string, mods: { ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean; shiftKey?: boolean } = {}) => ({ key: k, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...mods });
 
 describe('keyboard shortcuts (007 FR-708)', () => {
-  it('Space is 別の世界, Ctrl+Z / ⌘Z is ひとつ戻す, on the page itself', () => {
-    expect(keyAction(key(' '), { tag: 'BODY' })).toBe('next');
+  it('Ctrl+Z / ⌘Z is ひとつ戻す on the page itself; Space does nothing (別の世界 is gone, 013)', () => {
+    expect(keyAction(key(' '), { tag: 'BODY' })).toBeNull();
     expect(keyAction(key('z', { ctrlKey: true }), { tag: 'BODY' })).toBe('restore');
     expect(keyAction(key('Z', { metaKey: true }), { tag: 'CANVAS' })).toBe('restore');
   });

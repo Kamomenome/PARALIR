@@ -2,9 +2,9 @@ import './style.css';
 import { useOnDeviceAi } from '../ai/provider';
 import { RenderController } from '../app/controller';
 import { blockExternalRequests } from '../app/offline';
-import { createInitialState, firstLook, nextWorld, restorePrevious, setLasso, setSpaceControls, setSpaceType, setTime, syncNow, type AppState } from '../app/state';
+import { createInitialState, firstLook, restorePrevious, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
 import { chooseWorkers, createInlineWorker } from '../app/workers';
-import { formatOffset, snapshotFromLocal, systemTimeZone } from '../engine/common/time/snapshot';
+import { systemTimeZone } from '../engine/common/time/snapshot';
 import { buildAbout } from './about';
 import { createBusy } from './busy';
 import type { AppContext } from './context';
@@ -19,7 +19,8 @@ import { previewer } from './preview';
 import { buildRecipePanel } from './recipePanel';
 import { wireRecipes } from './recipeActions';
 import { buildSpacePanel } from './spacePanel';
-import { buildTimeControls } from './timeControls';
+import { buildTechPanel } from './techPanel';
+import { partsOverlay } from './partsOverlay';
 
 // Before anything else: nothing is sent off the device, whatever a library tries (004 FR-409).
 blockExternalRequests();
@@ -29,15 +30,16 @@ const ui = buildLayout(document.getElementById('app')!);
 let state: AppState = createInitialState(Date.now(), systemTimeZone());
 
 // The panel, top to bottom in the order of use (007 FR-703); the artwork time and recipe loading are folded away.
-const artworkTime = h('span', { class: 'muted', 'data-testid': 'artwork-time' });
-const timeControls = buildTimeControls(state.time);
 const controls = buildControls();
 const exportPanel = buildExportPanel();
 const recipePanel = buildRecipePanel();
 const spacePanel = buildSpacePanel(controls.root);
-const details = h('details', { class: 'group details', 'data-testid': 'details' }, h('summary', {}, '詳しい設定', h('br'), artworkTime), timeControls.root, recipePanel.loadRoot, buildAbout());
+const tech = buildTechPanel(spacePanel.partsLine);
+const details = h('details', { class: 'group details', 'data-testid': 'details' }, h('summary', {}, '詳しい設定'), recipePanel.loadRoot, tech.root, buildAbout());
 ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, h('div', { class: 'row' }, exportPanel.root, recipePanel.saveRoot), exportPanel.status, recipePanel.status), details);
-const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。「別の世界」（Space）を押すと別の世界になります');
+// 「変える」: from the photo as it is to the world (013 FR-1307); shown only while the photo is.
+const transform = h('button', { class: 'small', 'data-testid': 'transform' }, '変える');
+const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。', transform, ' を押すか、設定を変えると絵が変わります');
 ui.caption.append(photoHint, ...spacePanel.captionItems);
 
 // Workers are probed in the background; every change waits for them in the queue, so nothing done early is lost.
@@ -81,6 +83,8 @@ const ctx: AppContext = {
   },
 };
 const renderPreview = previewer(ctx);
+const overlay = partsOverlay(ui);
+tech.onShowParts((on) => overlay.set(on, state));
 const lasso = wireLasso(ctx);
 let outlineVisible = true;
 spacePanel.onOutline(() => {
@@ -90,10 +94,9 @@ spacePanel.onOutline(() => {
 });
 
 function refreshPanel() {
-  const t = state.time;
-  artworkTime.textContent = `作品日時 ${t.localDateTime.replace('T', ' ')}　${t.timeZone}（UTC${formatOffset(t.offsetMinutes)}）`;
-  timeControls.show(t);
-  controls.show(state.variationIndex, state.previous !== null);
+  tech.show(state);
+  overlay.draw(state);
+  controls.show(state.previous !== null);
   spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true);
   spacePanel.showParts(state.source ? state.spaceParts : null);
   spacePanel.showLasso(state.spaceRange);
@@ -113,22 +116,18 @@ function refreshPanel() {
 
 // Every action shows the world if the photo is still shown as it is (011 FR-1102).
 const act = (fn: (s: AppState) => AppState | Promise<AppState>) => ctx.update((s) => firstLook(s, fn, true));
-const next = () => ctx.update((s) => firstLook(s, nextWorld));
 spacePanel.onSlider((patch) => act((s) => setSpaceControls(s, patch)));
 spacePanel.onLassoClear(() => act((s) => setLasso(s, null)));
 spacePanel.onType((t) => act((s) => setSpaceType(s, t)));
-controls.onNextWorld(next);
+transform.addEventListener('click', () => ctx.update((s) => firstLook(s, (x) => x)));
 controls.onRestore(() => ctx.update(restorePrevious));
-timeControls.onChange((local, zone) => act((s) => setTime(s, snapshotFromLocal(local, zone))));
-timeControls.onNow(() => act((s) => syncNow(s, Date.now())));
-// Space: 別の世界, Ctrl+Z / ⌘Z: ひとつ戻す, unless the focused control needs the key (007 FR-708).
+// Ctrl+Z / ⌘Z: ひとつ戻す, unless the focused control has its own undo (007 FR-708).
 document.addEventListener('keydown', (e) => {
   const t = e.target as HTMLElement;
   const action = keyAction(e, { tag: t.tagName, editable: t.isContentEditable });
   if (!action || e.repeat) return;
   e.preventDefault();
-  if (action === 'next') next();
-  else if (state.previous) ctx.update(restorePrevious);
+  if (action === 'restore' && state.previous) ctx.update(restorePrevious);
 });
 wireExport(ctx, exportPanel);
 wireRecipes(ctx, recipePanel);

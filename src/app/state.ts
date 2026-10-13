@@ -24,8 +24,10 @@ export interface AppState {
   time: TimeSnapshot;
   variationIndex: number;
   source: SourceState | null;
-  /** One-step history: the state just before the composition seed last changed (FR-022). */
-  previous: SeedKey | null;
+  /** One-step history: the work just before the last change (013 FR-1308). */
+  previous: Step | null;
+  /** The kind of the last change: a run of the same slider is one step (013 FR-1308). */
+  lastStep: string | null;
   /** The engine that composes and draws the work (009 FR-904): the current one, or a frozen one for an older recipe. */
   engineId: string;
   /** A new photo is shown as it is until the first action (011 FR-1101); the world is composed behind it all the same. */
@@ -78,6 +80,10 @@ export function useLassoCutter(c: LassoCutter | null): void {
 
 /** Sets (or, with null, clears) the lasso; its range: the AI candidate it circles, else the lasso (005 FR-504). */
 export async function setLasso(s: AppState, lasso: Lasso | null): Promise<AppState> {
+  return applyLasso({ ...s, ...remember(s, 'lasso') }, lasso);
+}
+
+async function applyLasso(s: AppState, lasso: Lasso | null): Promise<AppState> {
   if (!lasso || lasso.length < 3 || !s.source) return { ...s, spaceLasso: null, spaceRange: null };
   const pr = await partsFor(s.source);
   const parts = pr.status === 'ok' ? pr.parts : null;
@@ -110,18 +116,31 @@ export function partsFor(source: SourceState): Promise<PartsResult> {
   return hit;
 }
 
-/** The parts that, with the photo, decide the composition. */
-export interface SeedKey {
+/** What 「ひとつ戻す」 brings back (013 FR-1308): the settings a change can touch. */
+export interface Step {
   time: TimeSnapshot;
   variationIndex: number;
   spaceControls: SpaceControls;
+  spaceType: string;
+  spaceLasso: Lasso | null;
+  spaceRange: ThemeRange | null;
 }
 
-const keyOf = (s: AppState): SeedKey => ({
+const stepOf = (s: AppState): Step => ({
   time: s.time,
   variationIndex: s.variationIndex,
   spaceControls: { ...s.spaceControls },
+  spaceType: s.spaceType,
+  spaceLasso: s.spaceLasso,
+  spaceRange: s.spaceRange,
 });
+
+/** Remembers the work before this change; with `runs`, the same change again (dragging one slider) stays one step. */
+function remember(s: AppState, step: string, runs = false): Pick<AppState, 'previous' | 'lastStep'> {
+  if (!s.source) return { previous: s.previous, lastStep: s.lastStep };
+  if (runs && s.lastStep === step && s.previous) return { previous: s.previous, lastStep: step };
+  return { previous: stepOf(s), lastStep: runs ? step : null };
+}
 
 /** The artwork time is taken once when the app opens and then stays fixed (FR-018). */
 export function createInitialState(nowMs: number, timeZone: string): AppState {
@@ -130,6 +149,7 @@ export function createInitialState(nowMs: number, timeZone: string): AppState {
     variationIndex: 0,
     source: null,
     previous: null,
+    lastStep: null,
     engineId: CURRENT_ENGINE,
     showing: 'photo',
     spaceControls: { ...DEFAULT_SPACE_CONTROLS },
@@ -165,7 +185,7 @@ async function composeSpaceState(s: AppState): Promise<AppState> {
 /** Spatial sliders keep the composition; only the feature influence re-maps the odds (003 FR-309). */
 export async function setSpaceControls(s: AppState, patch: Partial<SpaceControls>): Promise<AppState> {
   const spaceControls = { ...s.spaceControls, ...patch };
-  const next = { ...s, spaceControls };
+  const next = { ...s, spaceControls, ...remember(s, `slider:${Object.keys(patch).sort().join(',')}`, true) };
   if (patch.featureInfluence !== undefined && patch.featureInfluence !== s.spaceControls.featureInfluence) {
     return composeSpaceState(next);
   }
@@ -174,7 +194,7 @@ export async function setSpaceControls(s: AppState, patch: Partial<SpaceControls
 
 /** Fixing (or releasing) the world type re-renders without recomposing (FR-310). */
 export function setSpaceType(s: AppState, spaceType: string): AppState {
-  return { ...s, spaceType };
+  return { ...s, spaceType, ...remember(s, 'type') };
 }
 
 /** Applies a checked recipe with the engine its versions belong to (009 FR-905). */
@@ -187,32 +207,33 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
     variationIndex: r.variationIndex,
     spaceControls: { ...r.controls },
     spaceType: r.worldType,
-    previous: s.source ? keyOf(s) : null,
+    ...remember(s, 'recipe'),
   });
-  return setLasso(next, r.lasso ?? null);
+  return applyLasso(next, r.lasso ?? null);
 }
 
 /**
  * The photo alone, as soon as it is read (012 FR-1203): shown as it is while the AI and the world are made behind it
  * (withSource follows). No world yet, so nothing can be saved or exported.
  */
-export function withPhoto(s: AppState, source: SourceState): AppState {
-  return { ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, spaceLasso: null, spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
+export function withPhoto(s: AppState, source: SourceState, time: TimeSnapshot = s.time): AppState {
+  // The artwork time is when the photo goes in (016 FR-1601).
+  return { ...s, source, time, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLasso: null, spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
 }
 
 /** A new photo starts a new work with the current engine: the one-step history is cleared. */
 export async function withSource(s: AppState, source: SourceState): Promise<AppState> {
-  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, spaceLasso: null, spaceRange: null });
+  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLasso: null, spaceRange: null });
 }
 
 /** Seed-changing transition that remembers where it came from. */
 async function changeSeed(s: AppState, patch: Partial<Pick<AppState, 'time' | 'variationIndex'>>): Promise<AppState> {
-  return reseed({ ...s, ...patch, previous: s.source ? keyOf(s) : s.previous });
+  return reseed({ ...s, ...patch, ...remember(s, 'seed') });
 }
 
 /**
- * The first action on a new photo shows the world (011 FR-1102). 「別の世界」 then shows the current variation
- * rather than skipping it; any other action (`apply`) also makes its change.
+ * The first action on a new photo shows the world (011 FR-1102). 「変える」 (013 FR-1307) only shows it; any other
+ * action (`apply`) also makes its change.
  */
 export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Promise<AppState>, apply = false): Promise<AppState> {
   if (s.showing === 'world') return fn(s);
@@ -220,23 +241,16 @@ export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Pro
   return apply ? fn(shown) : shown;
 }
 
-/** 「別の世界」: same photo and time, next variation (R04). */
+/** The next variation of the same photo and time (R04). No button since 013; old recipes and the pixel records use variations. */
 export function nextWorld(s: AppState): Promise<AppState> {
   return changeSeed(s, { variationIndex: s.variationIndex + 1 });
 }
 
-export function setTime(s: AppState, time: TimeSnapshot): Promise<AppState> {
-  return changeSeed(s, { time });
-}
-
-/** 「現在に合わせる」 in the current time zone. */
-export function syncNow(s: AppState, nowMs: number): Promise<AppState> {
-  return changeSeed(s, { time: snapshotNow(nowMs, s.time.timeZone) });
-}
-
-/** 「ひとつ戻す」: one step back to before the last seed change. */
+/** 「ひとつ戻す」: back to the work before the last change (013 FR-1308). */
 export async function restorePrevious(s: AppState): Promise<AppState> {
   if (!s.previous) return s;
   const p = s.previous;
-  return reseed({ ...s, time: p.time, variationIndex: p.variationIndex, spaceControls: { ...p.spaceControls }, previous: null });
+  const back = { ...s, time: p.time, variationIndex: p.variationIndex, spaceControls: { ...p.spaceControls }, spaceType: p.spaceType, previous: null, lastStep: null };
+  // The lasso's range came with it; nothing to cut again.
+  return { ...(await reseed(back)), spaceLasso: p.spaceLasso, spaceRange: p.spaceRange };
 }

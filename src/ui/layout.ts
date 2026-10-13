@@ -1,4 +1,5 @@
 import { APP_NAME, APP_VERSION } from '../app/version';
+import logoUrl from './brand/paralir-logo-1x.png';
 
 export const PREVIEW_W = 960;
 export const PREVIEW_H = 720;
@@ -59,7 +60,7 @@ export function buildLayout(root: HTMLElement): Layout {
   const changePhoto = h('button', { type: 'button', 'data-testid': 'change-photo', hidden: '' }, '別の写真');
   const caption = h('div', { class: 'caption' }, sourceInfo);
   const stage = h('main', { class: 'stage', 'data-testid': 'stage' }, h('div', { class: 'frame' }, picture), h('div', { class: 'under' }, h('div', { class: 'caption-row' }, caption, changePhoto), notices, errors), fileInput);
-  const panel = h('aside', { class: 'panel', 'data-testid': 'panel' }, h('header', { class: 'name' }, h('h1', {}, APP_NAME), h('span', { class: 'muted', 'data-testid': 'app-version' }, `ver ${APP_VERSION}`)));
+  const panel = h('aside', { class: 'panel', 'data-testid': 'panel' }, h('header', { class: 'name' }, h('h1', {}, h('img', { class: 'logo', src: logoUrl, alt: '', 'aria-hidden': 'true', 'data-testid': 'logo' }), h('span', { class: 'sr-only' }, APP_NAME)), h('span', { class: 'muted', 'data-testid': 'app-version' }, `ver ${APP_VERSION}`)));
   root.replaceChildren(stage, panel);
 
   const fns: ((f: File) => void)[] = [];

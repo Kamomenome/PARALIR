@@ -1,5 +1,6 @@
 import { decodeFile } from '../app/decode';
 import { prepareSource, withPhoto, withSource } from '../app/state';
+import { snapshotNow, systemTimeZone } from '../engine/common/time/snapshot';
 import type { AppContext } from './context';
 import { showMessage } from './layout';
 import { TRANSPARENCY_NOTICE, loadErrorMessage, setNotices } from './notices';
@@ -27,7 +28,7 @@ export function wirePhotoInput(ctx: AppContext): void {
         ctx.controller().setSource(source.id, loaded.img, source.features);
         ui.sourceInfo.textContent = `${loaded.name}　${loaded.img.width}×${loaded.img.height}`;
         setNotices(ui.notices, [...ctx.lastingNotices, ...(loaded.hadTransparency ? [TRANSPARENCY_NOTICE] : [])]);
-        return withPhoto(s, source);
+        return withPhoto(s, source, snapshotNow(Date.now(), systemTimeZone()));
       });
       const looking = ctx.busy.start('ai');
       ctx.update(async (s) => {

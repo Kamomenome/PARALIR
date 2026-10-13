@@ -31,18 +31,13 @@ test('写真を入れると元の写真が出て、案内があり、保存は�
   await expect(page.getByTestId('recipe-save')).toBeDisabled();
 });
 
-test('最初の Space で別案 0 の世界、次の Space で別案 1。スライダーや囲みでも世界になる（011 SC-1102）', async ({ page }) => {
+test('「変える」で世界になる。スライダーや囲みでも世界になる（011 SC-1102, 013 FR-1307）', async ({ page }) => {
   await withPhoto(page);
-  await page.locator('body').press(' ');
+  await page.getByTestId('transform').click();
   await waitForPreview(page);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'world');
-  await expect(page.getByTestId('variation')).toHaveText('0');
   await expect(page.getByTestId('photo-hint')).toBeHidden();
   await expect(page.getByTestId('export')).toBeEnabled();
-  await page.locator('body').press(' ');
-  await waitForPreview(page);
-  await expect(page.getByTestId('variation')).toHaveText('1');
-
   // A slider on a fresh photo shows the world too.
   await withPhoto(page);
   await page.getByTestId('space-control-light').evaluate((el: HTMLInputElement) => {

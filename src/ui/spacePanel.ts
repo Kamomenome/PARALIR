@@ -17,8 +17,10 @@ const TYPES: [string, string, string][] = WORLDS.map((w) => [w.type, w.label, w.
 
 export interface SpacePanel {
   root: HTMLElement;
-  /** What is said about the picture, placed under it (007 FR-704): parts, lasso, clear. */
+  /** What is said about the picture, placed under it (007 FR-704): the lasso and its buttons. */
   captionItems: HTMLElement[];
+  /** What the AI saw, in 技術的な表示 (016 FR-1604). */
+  partsLine: HTMLElement;
   /** `seeded` is the seed's own choice, shown next to おまかせ; the split world needs a subject. */
   show(c: SpaceControls, type: string, visible: boolean, seeded: string | null, hasSubject: boolean): void;
   onSlider(fn: (patch: Partial<SpaceControls>) => void): void;
@@ -82,7 +84,8 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
   select.addEventListener('change', () => typeFns.forEach((f) => f(select.value)));
   return {
     root,
-    captionItems: [parts, lassoText, lassoOutline, lassoClear],
+    captionItems: [lassoText, lassoOutline, lassoClear],
+    partsLine: parts,
     show(c, type, visible, seeded, hasSubject) {
       root.hidden = !visible;
       select.value = type;

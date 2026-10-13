@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { IMAGES, previewHash, waitForPreview, openDetails, showWorld } from './helpers';
+import { IMAGES, previewHash, waitForPreview, showWorld } from './helpers';
+
+
+// The artwork time is when the photo goes in (016 FR-1601): the browser's clock and time zone are fixed instead.
+test.use({ timezoneId: 'Asia/Tokyo' });
+test.beforeEach(async ({ page }) => page.clock.setFixedTime(new Date('2026-10-11T03:00:00Z')));
 
 async function openWithFixedTime(page: Page) {
   await page.goto('/?ai=off');
-  await openDetails(page);
-  await page.getByTestId('timezone-select').selectOption('Asia/Tokyo');
-  await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
   await showWorld(page);

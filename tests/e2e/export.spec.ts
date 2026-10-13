@@ -1,13 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { PNG } from 'pngjs';
-import { IMAGES, waitForPreview, openDetails, showWorld } from './helpers';
+import { IMAGES, waitForPreview, showWorld } from './helpers';
+
+
+// The artwork time is when the photo goes in (016 FR-1601): the browser's clock and time zone are fixed instead.
+test.use({ timezoneId: 'Asia/Tokyo' });
+test.beforeEach(async ({ page }) => page.clock.setFixedTime(new Date('2026-10-11T03:00:00Z')));
 
 async function open(page: Page) {
   await page.goto('/?ai=off');
-  await openDetails(page);
-  await page.getByTestId('timezone-select').selectOption('Asia/Tokyo');
-  await page.getByTestId('time-input').fill('2026-10-11T12:00');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
   await showWorld(page);
@@ -70,7 +72,6 @@ test('書き出しはキャンセルでき、PNG は保存されない（R11）'
 test('保存したレシピを読み込むと同じ作品に戻る（A10）', async ({ page }) => {
   test.setTimeout(600_000);
   await open(page);
-  await page.getByTestId('next-world').click();
   await slider(page, 'darkness', 0.8);
   await waitForPreview(page);
   const recipe = page.waitForEvent('download');
@@ -81,7 +82,6 @@ test('保存したレシピを読み込むと同じ作品に戻る（A10）', as
   await open(page);
   await page.setInputFiles('[data-testid="recipe-input"]', path);
   await expect(page.getByTestId('recipe-status')).toContainText('読み込みました');
-  await expect(page.getByTestId('variation')).toHaveText('1');
   await waitForPreview(page);
   const after = await exportPng(page);
   expect(Buffer.compare(before.data, after.data)).toBe(0);

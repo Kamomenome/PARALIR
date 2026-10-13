@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createInitialState, firstLook, nextWorld, prepareSource, withSource } from '../../src/app/state';
+import { createInitialState, firstLook, prepareSource, withSource } from '../../src/app/state';
 import { makeScene } from '../helpers/images';
 
 async function photo() {
@@ -14,13 +14,11 @@ describe('a new photo is shown as it is until the first action (011 FR-1101, FR-
     expect(s.spaceWorld).not.toBeNull();
   });
 
-  it('the first 別の世界 shows variation 0; the next one moves on', async () => {
+  it('「変える」 (no change of its own) shows the world as it is (013 FR-1307)', async () => {
     const s = await photo();
-    const t = await firstLook(s, nextWorld);
+    const t = await firstLook(s, (x) => x);
     expect(t.showing).toBe('world');
     expect(t.variationIndex).toBe(0);
-    const u = await firstLook(t, nextWorld);
-    expect(u.variationIndex).toBe(1);
   });
 
   it('any other first action shows the world and does its change', async () => {

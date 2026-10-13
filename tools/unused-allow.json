@@ -13,5 +13,7 @@
   "src/engine/space-v2/p9/seeds.ts#generatorFor": "凍結（Phase 9 の再現、005）",
   "src/engine/space-v2/p9/seeds.ts#buildSpaceSeedInput": "凍結（Phase 9 の再現、005）。p9 の再現テストが使う",
   "src/engine/space-v2/p9/surreal.ts#tintFor": "凍結（Phase 9 の再現、005）",
-  "src/engine/space-v2/p9/types.ts#SPACE_CONTROL_KEYS": "凍結（Phase 9 の再現、005）"
+  "src/engine/space-v2/p9/types.ts#SPACE_CONTROL_KEYS": "凍結（Phase 9 の再現、005）",
+  "src/app/state.ts#nextWorld": "別案の番号（ボタンは 013 でなくした）。画素の記録とテストで別案ごとの絵を描く",
+  "src/engine/common/time/snapshot.ts#snapshotFromLocal": "日時を画面で決めることは 016 でなくした。テストで決まったローカル日時の作品を作る"
 }

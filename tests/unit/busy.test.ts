@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createInitialState, prepareSource, withPhoto, withSource } from '../../src/app/state';
+import { snapshotNow } from '../../src/engine/common/time/snapshot';
 import { BUSY_TEXT, createBusy } from '../../src/ui/busy';
 import { makeScene } from '../helpers/images';
 
@@ -47,5 +48,12 @@ describe('a photo is shown before the AI and the world are ready (012 FR-1203)',
     const t = await withSource(s, src);
     expect(t.spaceWorld).not.toBeNull();
     expect(t.showing).toBe('photo');
+  });
+
+  it('the artwork time is when the photo goes in (016 FR-1601)', async () => {
+    const src = await prepareSource(1, { name: 'scene.png', img: makeScene(64, 48), fileSha256: 'a'.repeat(64) as any, fileBytes: 100, hadTransparency: false });
+    const opened = createInitialState(Date.UTC(2026, 9, 11, 3), 'Asia/Tokyo');
+    const now = snapshotNow(Date.UTC(2026, 9, 11, 5, 30), 'Asia/Tokyo');
+    expect(withPhoto(opened, src, now).time).toEqual(now);
   });
 });
