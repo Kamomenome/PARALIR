@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "space-recipe.schema.json",
+  "title": "変貌世界 空間レシピ（space-v1, schemaVersion 7）",
+  "description": "src/core/space/recipe.ts の validateSpaceRecipe と一致させる（tests/unit/space-recipe-contract.test.ts）。schemaVersion 3〜6 は読込時に 7 へ移行する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "engineVersion",
+    "prngVersion",
+    "analysisVersion",
+    "algorithms",
+    "algorithm",
+    "pipeline",
+    "source",
+    "time",
+    "variationIndex",
+    "seed",
+    "controls",
+    "output"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 7
+    },
+    "engineVersion": {
+      "const": "space-v1"
+    },
+    "prngVersion": {
+      "const": "seeded32-v1"
+    },
+    "analysisVersion": {
+      "const": "analysis-v1"
+    },
+    "algorithms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "flame",
+        "growth",
+        "parts",
+        "composite",
+        "foregrounds"
+      ],
+      "properties": {
+        "flame": {
+          "type": "string"
+        },
+        "growth": {
+          "type": "string"
+        },
+        "parts": {
+          "type": "string"
+        },
+        "composite": {
+          "type": "string"
+        },
+        "foregrounds": {
+          "type": "string"
+        }
+      }
+    },
+    "algorithm": {
+      "enum": [
+        "flame",
+        "growth",
+        "parts",
+        "composite"
+      ]
+    },
+    "pipeline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "background",
+        "foreground",
+        "merge"
+      ],
+      "properties": {
+        "background": {
+          "enum": [
+            "auto",
+            "light",
+            "sphere",
+            "droste",
+            "box",
+            "formula"
+          ]
+        },
+        "foreground": {
+          "enum": [
+            "auto",
+            "plates",
+            "cutouts",
+            "contours",
+            "surface",
+            "kaleidoscope",
+            "rorschach",
+            "fragments",
+            "arrays",
+            "none",
+            "structures"
+          ]
+        },
+        "merge": {
+          "enum": [
+            "auto",
+            "depth",
+            "otherworld"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "fileSha256",
+        "pixelHash",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "fileSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "pixelHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "required": [
+        "instantEpochMs",
+        "localDateTime",
+        "timeZone",
+        "offsetMinutes"
+      ]
+    },
+    "variationIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "seed": {
+      "type": "object",
+      "required": [
+        "seedInput",
+        "rootSeed"
+      ]
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "depth",
+        "organic",
+        "glow",
+        "shapeRetention",
+        "fog",
+        "featureInfluence"
+      ],
+      "properties": {
+        "depth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "organic": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "glow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "shapeRetention": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fog": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "featureInfluence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "format",
+        "qualityMode"
+      ]
+    }
+  }
+}

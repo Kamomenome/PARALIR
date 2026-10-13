@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+# 参照資料は manifest.json の SHA-256 と一致させるため、改行変換をしない
+docs/** -text

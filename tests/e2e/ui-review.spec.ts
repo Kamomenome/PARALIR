@@ -1,0 +1,149 @@
+import { readFileSync } from 'node:fs';
+import { expect, test, type Page } from '@playwright/test';
+import { IMAGES, waitForPreview } from './helpers';
+
+const PHOTO = `${IMAGES}/gradient-64x48.png`;
+
+async function withPhoto(page: Page) {
+  await page.goto('/?ai=off');
+  await page.setInputFiles('[data-testid="file-input"]', PHOTO);
+  await waitForPreview(page);
+}
+
+const rgb = (c: string) => c.match(/\d+(\.\d+)?/g)!.slice(0, 3).map(Number);
+const lum = (c: string) => {
+  const [r, g, b] = rgb(c).map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a: string, b: string) => {
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+};
+const css = (page: Page, testid: string, prop: string) => page.getByTestId(testid).evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+
+for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900 }]) {
+  test(`絵がいつも全体で見え、ページはスクロールしない ${viewport.width}×${viewport.height}（007 SC-701）`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await withPhoto(page);
+    const doc = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, w: document.documentElement.scrollWidth }));
+    expect(doc.h).toBeLessThanOrEqual(viewport.height);
+    expect(doc.w).toBeLessThanOrEqual(viewport.width);
+    const pic = (await page.getByTestId('preview').boundingBox())!;
+    expect(pic.y).toBeGreaterThanOrEqual(0);
+    expect(pic.y + pic.height).toBeLessThanOrEqual(viewport.height);
+    const panel = (await page.getByTestId('panel').boundingBox())!;
+    expect(panel.x).toBeGreaterThan(pic.x + pic.width - 1);
+    if (viewport.width === 1440) expect(pic.width).toBeGreaterThan(960);
+    else expect(pic.height).toBeGreaterThanOrEqual(viewport.height * 0.7);
+    // The panel scrolls inside itself.
+    expect(await css(page, 'panel', 'overflow-y')).toBe('auto');
+  });
+}
+
+test('写真の入れ方: 選ぶ前は「写真を選ぶ」、ドロップで入る、入れた後は「別の写真」（007 SC-702）', async ({ page }) => {
+  await page.goto('/?ai=off');
+  await expect(page.getByTestId('drop')).toBeVisible();
+  await expect(page.getByTestId('drop')).toContainText('写真を選ぶ');
+  await expect(page.getByTestId('file-input')).toBeHidden();
+  await expect(page.getByTestId('recipe-input')).toBeHidden();
+  await expect(page.getByTestId('change-photo')).toBeHidden();
+
+  const b64 = readFileSync(PHOTO).toString('base64');
+  await page.getByTestId('stage').evaluate((stage, data) => {
+    const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], 'dropped.png', { type: 'image/png' }));
+    stage.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true }));
+    stage.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, b64);
+  await waitForPreview(page);
+  await expect(page.getByTestId('source-info')).toContainText('dropped.png');
+  await expect(page.getByTestId('source-info')).toContainText('64×48');
+  await expect(page.getByTestId('drop')).toBeHidden();
+  await expect(page.getByTestId('change-photo')).toBeVisible();
+  // The file name is shown once.
+  await expect(page.getByText('dropped.png')).toHaveCount(1);
+});
+
+test('パネルの順番: 世界 → 別の世界 → スライダー → 書き出し、作品日時は詳しい設定の中（007 SC-703）', async ({ page }) => {
+  await withPhoto(page);
+  const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
+  const order = [await y('space-world'), await y('next-world'), await y('space-control-light'), await y('export')];
+  expect([...order].sort((a, b) => a - b)).toEqual(order);
+  await expect(page.getByTestId('time-input')).toBeHidden();
+  await expect(page.getByTestId('details')).toContainText('作品日時');
+  await page.getByTestId('details').locator(':scope > summary').click();
+  await expect(page.getByTestId('time-input')).toBeVisible();
+  await expect(page.getByTestId('recipe-load')).toBeVisible();
+});
+
+test('絵についての案内は絵の下で控えめ、言葉は使う人の言葉（007 SC-704）', async ({ page }) => {
+  await withPhoto(page);
+  const pic = (await page.getByTestId('preview').boundingBox())!;
+  for (const id of ['parts-status', 'lasso-status']) {
+    const box = (await page.getByTestId(id).boundingBox())!;
+    expect(box.y, id).toBeGreaterThanOrEqual(pic.y + pic.height);
+    expect(parseFloat(await css(page, id, 'font-size')), id).toBeLessThanOrEqual(13);
+  }
+  await expect(page.getByText('直前のレシピ')).toHaveCount(0);
+  await expect(page.getByTestId('restore-previous')).toContainText('ひとつ戻す');
+  const options = await page.getByTestId('space-world').locator('option').allTextContents();
+  for (const o of options) expect((o.match(/（/g) ?? []).length, o).toBeLessThan(2);
+  await expect(page.getByTestId('world-note')).not.toBeEmpty();
+});
+
+test('画面の部品は無彩色、控えめな文字も読める（007 SC-705）', async ({ page }) => {
+  await withPhoto(page);
+  const grey = (c: string) => {
+    const [r, g, b] = rgb(c);
+    return r === g && g === b;
+  };
+  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['next-world', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-light', 'accent-color']] as const) {
+    const c = await css(page, id, prop);
+    expect(grey(c), `${id} ${prop} ${c}`).toBe(true);
+  }
+  const muted = await css(page, 'app-version', 'color');
+  const panel = await css(page, 'panel', 'background-color');
+  expect(ratio(muted, panel)).toBeGreaterThanOrEqual(4.5);
+});
+
+test('手応え: バーは描いている間だけ、絵の上は十字、キャンセルは書き出し中だけ（007 SC-706）', async ({ page }) => {
+  await withPhoto(page);
+  await expect(page.getByTestId('progress')).toBeHidden();
+  expect(await css(page, 'preview', 'cursor')).toBe('crosshair');
+  await expect(page.getByTestId('export-cancel')).toBeHidden();
+});
+
+test('キーボード: Space で別の世界、Ctrl+Z でひとつ戻す、選択枠が見える（007 SC-707）', async ({ page }) => {
+  await withPhoto(page);
+  await expect(page.getByTestId('variation')).toHaveText('0');
+  await page.locator('body').press(' ');
+  await waitForPreview(page);
+  await expect(page.getByTestId('variation')).toHaveText('1');
+  await page.locator('body').press('Control+z');
+  await waitForPreview(page);
+  await expect(page.getByTestId('variation')).toHaveText('0');
+  // Space on a slider stays the slider's.
+  await page.getByTestId('space-control-light').focus();
+  await page.keyboard.press(' ');
+  await expect(page.getByTestId('variation')).toHaveText('0');
+  // A button chosen with the keyboard shows a ring of 2px or more.
+  await page.keyboard.press('Shift+Tab');
+  const focused = await page.evaluate(() => {
+    const s = getComputedStyle(document.activeElement!);
+    return { style: s.outlineStyle, width: parseFloat(s.outlineWidth) };
+  });
+  expect(focused.style).not.toBe('none');
+  expect(focused.width).toBeGreaterThanOrEqual(2);
+});
+
+test('動きを減らす設定では切り替えの時間が 0（007 SC-707, FR-709）', async ({ page }) => {
+  await withPhoto(page);
+  const seconds = async () => (await css(page, 'preview', 'transition-duration')).split(',').map((v) => parseFloat(v));
+  expect(Math.max(...(await seconds()))).toBeGreaterThan(0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(Math.max(...(await seconds()))).toBe(0);
+});

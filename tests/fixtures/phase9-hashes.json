@@ -1,0 +1,230 @@
+{
+  "input": "samples/reference/decoded-source.png",
+  "time": "2026-10-11T12:00 Asia/Tokyo",
+  "cells": [
+    {
+      "foreground": "plates",
+      "variation": 0,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "plates",
+        "merge": "depth"
+      },
+      "rootSeed": "ec7737b7f9084354b7ca106dc507ccef4a97dac2edfd71516471665767c17171",
+      "rgbaSha256": "222d33a94319acac5707b3afac5eae7daee22eb348b767964217824cecfb5907"
+    },
+    {
+      "foreground": "plates",
+      "variation": 1,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "plates",
+        "merge": "depth"
+      },
+      "rootSeed": "7c8a4b294f5d27ff13e3374c67845f55e467fa372bb409dcc7842d8a03a917b6",
+      "rgbaSha256": "809fcbf1f044514fd868b0014612757544f60eec0584ab415f59806682ee353a"
+    },
+    {
+      "foreground": "plates",
+      "variation": 2,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "plates",
+        "merge": "depth"
+      },
+      "rootSeed": "c90e7a91f37d31ff6afcfbc696d2ea4e6acc2161e23ec2e45259a1d2e229ceb2",
+      "rgbaSha256": "8f025cdcb726a709bf63bff5aeb07c954a135fa0754bc33605c8becc0d45f56f"
+    },
+    {
+      "foreground": "plates",
+      "variation": 3,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "plates",
+        "merge": "depth"
+      },
+      "rootSeed": "09cf2366635e279cdd7180a16df91d220c314e8223dbd60f3253af08dabd16d9",
+      "rgbaSha256": "5a7edf706aa697d7ef97fec06067dc910f4abb7267b2f573e982466fdba1f257"
+    },
+    {
+      "foreground": "cutouts",
+      "variation": 0,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "cutouts",
+        "merge": "depth"
+      },
+      "rootSeed": "ec7737b7f9084354b7ca106dc507ccef4a97dac2edfd71516471665767c17171",
+      "rgbaSha256": "bc0719a25ce4e94aaaf24d1f3945595dda40bcf86437cbd66b138523ddfd02bb"
+    },
+    {
+      "foreground": "cutouts",
+      "variation": 1,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "cutouts",
+        "merge": "depth"
+      },
+      "rootSeed": "7c8a4b294f5d27ff13e3374c67845f55e467fa372bb409dcc7842d8a03a917b6",
+      "rgbaSha256": "59612531a3f26b348fbc38869c4f351bf144a00430985862fe432c85e041b3b2"
+    },
+    {
+      "foreground": "cutouts",
+      "variation": 2,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "cutouts",
+        "merge": "depth"
+      },
+      "rootSeed": "c90e7a91f37d31ff6afcfbc696d2ea4e6acc2161e23ec2e45259a1d2e229ceb2",
+      "rgbaSha256": "167d6e38523d7f5d32b7d5070bc0458d3dabf38d2f8389f2c2c2760256c47fd8"
+    },
+    {
+      "foreground": "cutouts",
+      "variation": 3,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "cutouts",
+        "merge": "depth"
+      },
+      "rootSeed": "09cf2366635e279cdd7180a16df91d220c314e8223dbd60f3253af08dabd16d9",
+      "rgbaSha256": "d07a8d8606e35df5eaf3894b1cde437de75d2bdeffcadcc3f1752d4548ee3d3c"
+    },
+    {
+      "foreground": "contours",
+      "variation": 0,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "contours",
+        "merge": "depth"
+      },
+      "rootSeed": "ec7737b7f9084354b7ca106dc507ccef4a97dac2edfd71516471665767c17171",
+      "rgbaSha256": "c9c9b2a4c1662e3324cfb1644707d35d53c0e0e277a6cb6d50425360ebedb410"
+    },
+    {
+      "foreground": "contours",
+      "variation": 1,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "contours",
+        "merge": "depth"
+      },
+      "rootSeed": "7c8a4b294f5d27ff13e3374c67845f55e467fa372bb409dcc7842d8a03a917b6",
+      "rgbaSha256": "212231c7730280fd9dc040c32c140ee8dac205dbcae7b209e9f0ec4a50bd8f13"
+    },
+    {
+      "foreground": "contours",
+      "variation": 2,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "contours",
+        "merge": "depth"
+      },
+      "rootSeed": "c90e7a91f37d31ff6afcfbc696d2ea4e6acc2161e23ec2e45259a1d2e229ceb2",
+      "rgbaSha256": "d287bd3d3c7bc088d537fb9cd84455e8a12f8bc7439b8a465f5b4c59fdb351d4"
+    },
+    {
+      "foreground": "contours",
+      "variation": 3,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "contours",
+        "merge": "depth"
+      },
+      "rootSeed": "09cf2366635e279cdd7180a16df91d220c314e8223dbd60f3253af08dabd16d9",
+      "rgbaSha256": "f085fb90f2f54d37fa53e61aad6019eaef079feb5c600168386f2d596868ba99"
+    },
+    {
+      "foreground": "kaleidoscope",
+      "variation": 0,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "kaleidoscope",
+        "merge": "depth"
+      },
+      "rootSeed": "ec7737b7f9084354b7ca106dc507ccef4a97dac2edfd71516471665767c17171",
+      "rgbaSha256": "fcf6a640a28de25c852c5f7d4071d533bc1edffcee4f2877fc9bf17f5d78fe48"
+    },
+    {
+      "foreground": "kaleidoscope",
+      "variation": 1,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "kaleidoscope",
+        "merge": "depth"
+      },
+      "rootSeed": "7c8a4b294f5d27ff13e3374c67845f55e467fa372bb409dcc7842d8a03a917b6",
+      "rgbaSha256": "8fe6c9afe0e95b720f291295cfdd227f66668cf7790c1cdbd2488af18d4a6677"
+    },
+    {
+      "foreground": "kaleidoscope",
+      "variation": 2,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "sphere",
+        "foreground": "kaleidoscope",
+        "merge": "depth"
+      },
+      "rootSeed": "c90e7a91f37d31ff6afcfbc696d2ea4e6acc2161e23ec2e45259a1d2e229ceb2",
+      "rgbaSha256": "9aa112f8ba3d80e4ab61c107d42276ea2870966379d8796b0324681358270da9"
+    },
+    {
+      "foreground": "kaleidoscope",
+      "variation": 3,
+      "width": 640,
+      "height": 480,
+      "quality": 0.4,
+      "pipeline": {
+        "background": "droste",
+        "foreground": "kaleidoscope",
+        "merge": "depth"
+      },
+      "rootSeed": "09cf2366635e279cdd7180a16df91d220c314e8223dbd60f3253af08dabd16d9",
+      "rgbaSha256": "40111c0a22758fe3f0458c1acbe00a74bace6ebaaac32092b2f8c24cf5d2e242"
+    }
+  ]
+}

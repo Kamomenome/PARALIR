@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+node_modules/
+dist/
+out/
+test-results/
+playwright-report/
+*.log
+# 展開済みの内容は docs/ にあるため、元の ZIP は管理しない
+metamorphosis-sdd.zip
+
+# User's own test photos (never committed)
+samples/
+
+# On-device vision models (downloaded once, not committed)
+models/
+dist-single/

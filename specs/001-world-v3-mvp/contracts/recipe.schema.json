@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "henbou-sekai/recipe-v3",
+  "title": "変貌世界 レシピ schemaVersion 3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "engineVersion", "analysisVersion", "prngVersion", "source", "time", "variationIndex", "seed", "controls", "preset", "analysis", "output"],
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "engineVersion": { "const": "world-v3" },
+    "analysisVersion": { "const": "analysis-v1" },
+    "prngVersion": { "const": "seeded32-v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileSha256", "pixelHash", "width", "height", "preprocess"],
+      "properties": {
+        "fileSha256": { "$ref": "#/$defs/hex64" },
+        "pixelHash": { "$ref": "#/$defs/hex64" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "preprocess": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["orientation", "alpha", "colorPolicy", "cropPx"],
+          "properties": {
+            "orientation": { "const": "exif" },
+            "alpha": { "const": "white" },
+            "colorPolicy": { "const": "reference-rgb" },
+            "cropPx": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["left", "top", "right", "bottom"],
+              "properties": {
+                "left": { "const": 0 }, "top": { "const": 0 },
+                "right": { "const": 0 }, "bottom": { "const": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instantEpochMs", "localDateTime", "timeZone", "offsetMinutes"],
+      "properties": {
+        "instantEpochMs": { "type": "string", "pattern": "^-?(0|[1-9][0-9]*)$" },
+        "localDateTime": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}$" },
+        "timeZone": { "type": "string", "minLength": 1 },
+        "offsetMinutes": { "type": "integer", "minimum": -1080, "maximum": 1080 }
+      }
+    },
+    "variationIndex": { "type": "integer", "minimum": 0 },
+    "seed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seedInput", "rootSeed"],
+      "properties": {
+        "seedInput": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "world-v3" },
+            { "$ref": "#/$defs/hex64" },
+            { "type": "string" },
+            { "type": "string" },
+            { "type": "string" },
+            { "type": "integer" },
+            { "type": "integer", "minimum": 0 }
+          ],
+          "minItems": 7,
+          "maxItems": 7
+        },
+        "rootSeed": { "$ref": "#/$defs/hex64" }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fineness", "grainVariation", "shapeRetention", "warpStrength", "colorChange", "featureInfluence"],
+      "properties": {
+        "fineness": { "$ref": "#/$defs/unit" },
+        "grainVariation": { "$ref": "#/$defs/unit" },
+        "shapeRetention": { "$ref": "#/$defs/unit" },
+        "warpStrength": { "$ref": "#/$defs/unit" },
+        "colorChange": { "$ref": "#/$defs/unit" },
+        "featureInfluence": { "$ref": "#/$defs/unit" }
+      }
+    },
+    "preset": {
+      "type": "object",
+      "required": ["id", "status", "grainRatio", "layers"],
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "enum": ["unevaluated", "adopted"] },
+        "grainRatio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coarse", "medium", "fine"],
+          "properties": {
+            "coarse": { "$ref": "#/$defs/unit" },
+            "medium": { "$ref": "#/$defs/unit" },
+            "fine": { "$ref": "#/$defs/unit" }
+          }
+        },
+        "layers": {
+          "type": "object",
+          "required": ["medium", "fine", "coarse"],
+          "properties": {
+            "medium": {
+              "type": "object",
+              "required": ["angularRepeats"],
+              "properties": { "angularRepeats": { "type": "integer", "minimum": 1 } }
+            },
+            "fine": {
+              "type": "object",
+              "required": ["angularRepeats"],
+              "properties": { "angularRepeats": { "type": "integer", "minimum": 1 } }
+            },
+            "coarse": {
+              "type": "object",
+              "required": ["patchCount"],
+              "properties": { "patchCount": { "type": "integer", "minimum": 1 } }
+            }
+          }
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "required": ["analysisWidth", "analysisHeight", "L", "K", "S", "H", "E", "D", "P"],
+      "properties": {
+        "analysisWidth": { "type": "integer", "minimum": 1 },
+        "analysisHeight": { "type": "integer", "minimum": 1 },
+        "L": { "$ref": "#/$defs/unit" },
+        "K": { "$ref": "#/$defs/unit" },
+        "S": { "$ref": "#/$defs/unit" },
+        "H": { "$ref": "#/$defs/unit" },
+        "E": { "type": "number" },
+        "D": { "type": "number", "minimum": 0 },
+        "P": { "type": "number" },
+        "derived": { "type": "object" }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "format", "qualityMode"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "format": { "const": "png" },
+        "qualityMode": { "enum": ["standard", "supersample-3"] }
+      }
+    }
+  },
+  "$defs": {
+    "hex64": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "unit": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "$comment": "JSON は NaN/Infinity を表現できないが、読込側は JSON.parse 後に全数値を Number.isFinite で再検査する。preset.layers の反復数が非整数なら拒否する。"
+}

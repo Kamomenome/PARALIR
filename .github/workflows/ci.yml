@@ -1,0 +1,29 @@
+# Every push: type check, unit and integration tests (pixels pinned), both builds, and the browser tests (009 FR-918).
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    # The main verification environment is Windows (constitution III).
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The AI models are not in git; fetched from Google and checked against their SHA-256.
+      - run: npx tsx tools/fetch-models.ts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run build:single
+      - run: npx playwright install chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results/

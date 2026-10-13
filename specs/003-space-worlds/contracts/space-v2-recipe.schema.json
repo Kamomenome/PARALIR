@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "space-v2-recipe.schema.json",
+  "title": "変貌世界 空間レシピ（space-v2）",
+  "description": "src/core/space/recipe.ts の validateSpaceRecipe と一致させる（tests/unit/space2-state.test.ts）。space-v1 のレシピは理由を示して拒否する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "engineVersion",
+    "prngVersion",
+    "analysisVersion",
+    "algorithms",
+    "worldType",
+    "source",
+    "time",
+    "variationIndex",
+    "seed",
+    "controls",
+    "output"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "engineVersion": {
+      "const": "space-v2"
+    },
+    "prngVersion": {
+      "const": "seeded32-v1"
+    },
+    "analysisVersion": {
+      "const": "analysis-v1"
+    },
+    "algorithms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "copies",
+        "dark",
+        "split",
+        "atmosphere",
+        "portal",
+        "mosaic",
+        "echo",
+        "theme"
+      ],
+      "properties": {
+        "copies": {
+          "type": "string"
+        },
+        "dark": {
+          "type": "string"
+        },
+        "split": {
+          "type": "string"
+        },
+        "atmosphere": {
+          "type": "string"
+        },
+        "portal": {
+          "type": "string"
+        },
+        "mosaic": {
+          "type": "string"
+        },
+        "echo": {
+          "type": "string"
+        },
+        "theme": {
+          "type": "string"
+        }
+      }
+    },
+    "worldType": {
+      "enum": [
+        "auto",
+        "copies",
+        "dark",
+        "split",
+        "portal",
+        "mosaic",
+        "echo",
+        "theme"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "fileSha256",
+        "pixelHash",
+        "width",
+        "height"
+      ]
+    },
+    "time": {
+      "type": "object",
+      "required": [
+        "instantEpochMs",
+        "localDateTime",
+        "timeZone",
+        "offsetMinutes"
+      ]
+    },
+    "variationIndex": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "seed": {
+      "type": "object",
+      "required": [
+        "seedInput",
+        "rootSeed"
+      ]
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "light",
+        "size",
+        "count",
+        "darkness",
+        "featureInfluence"
+      ],
+      "properties": {
+        "light": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "count": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "darkness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "featureInfluence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "format",
+        "qualityMode"
+      ]
+    },
+    "parts": {
+      "description": "004: what the on-device AI saw (version and digest); null when it did not run. Optional.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "digest"
+          ],
+          "properties": {
+            "version": {
+              "const": "parts-v2"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{16}$"
+            }
+          }
+        }
+      ]
+    },
+    "lasso": {
+      "description": "005: the rough lasso drawn over the preview (normalised photo coordinates); null when none. Optional.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 256,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      ]
+    },
+    "app": {
+      "description": "Optional (008 FR-802): the app version and commit that saved the work",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "commit"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{7,40}(-dirty)?|unknown)$"
+        }
+      }
+    }
+  }
+}
