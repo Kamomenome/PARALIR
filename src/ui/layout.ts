@@ -29,6 +29,9 @@ export interface Layout {
   /** Shown instead of the canvas until there is a photo (007 FR-702). */
   drop: HTMLElement;
   changePhoto: HTMLButtonElement;
+  /** The spinner and what is being done (012 FR-1201). */
+  busy: HTMLElement;
+  busyText: HTMLElement;
   /** The line under the picture for what is said about it (007 FR-704). */
   caption: HTMLElement;
   /** A photo chosen, dropped on the stage, or picked with 別の写真. */
@@ -50,7 +53,9 @@ export function buildLayout(root: HTMLElement): Layout {
     h('span', {}, 'ここへドラッグしても入ります'),
     h('small', {}, 'JPEG・PNG。写真は端末の外へ送りません'),
   );
-  const picture = h('div', { class: 'picture' }, canvas, drop, progress);
+  const busyText = h('span', { class: 'busy-text' });
+  const busy = h('div', { class: 'busy', 'data-testid': 'busy', role: 'status', hidden: '' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), busyText);
+  const picture = h('div', { class: 'picture' }, canvas, drop, progress, busy);
   const changePhoto = h('button', { type: 'button', 'data-testid': 'change-photo', hidden: '' }, '別の写真');
   const caption = h('div', { class: 'caption' }, sourceInfo);
   const stage = h('main', { class: 'stage', 'data-testid': 'stage' }, h('div', { class: 'frame' }, picture), h('div', { class: 'under' }, h('div', { class: 'caption-row' }, caption, changePhoto), notices, errors), fileInput);
@@ -83,7 +88,7 @@ export function buildLayout(root: HTMLElement): Layout {
     give(e.dataTransfer?.files[0]);
   });
 
-  return { fileInput, sourceInfo, notices, errors, progress, canvas, panel, stage, picture, drop, changePhoto, caption, onPhoto: (fn) => fns.push(fn) };
+  return { fileInput, sourceInfo, notices, errors, progress, canvas, panel, stage, picture, drop, changePhoto, busy, busyText, caption, onPhoto: (fn) => fns.push(fn) };
 }
 
 export function showMessage(target: HTMLElement, text: string): void {

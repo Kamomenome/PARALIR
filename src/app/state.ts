@@ -192,6 +192,14 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
   return setLasso(next, r.lasso ?? null);
 }
 
+/**
+ * The photo alone, as soon as it is read (012 FR-1203): shown as it is while the AI and the world are made behind it
+ * (withSource follows). No world yet, so nothing can be saved or exported.
+ */
+export function withPhoto(s: AppState, source: SourceState): AppState {
+  return { ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, spaceLasso: null, spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
+}
+
 /** A new photo starts a new work with the current engine: the one-step history is cleared. */
 export async function withSource(s: AppState, source: SourceState): Promise<AppState> {
   return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, spaceLasso: null, spaceRange: null });

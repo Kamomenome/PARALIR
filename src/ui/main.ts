@@ -6,6 +6,7 @@ import { createInitialState, firstLook, nextWorld, restorePrevious, setLasso, se
 import { chooseWorkers, createInlineWorker } from '../app/workers';
 import { formatOffset, snapshotFromLocal, systemTimeZone } from '../engine/common/time/snapshot';
 import { buildAbout } from './about';
+import { createBusy } from './busy';
 import type { AppContext } from './context';
 import { buildControls } from './controls';
 import { buildExportPanel } from './exportPanel';
@@ -55,8 +56,13 @@ const ready = chooseWorkers()
   });
 
 let chain: Promise<unknown> = ready;
+const busy = createBusy((text) => {
+  ui.busy.hidden = !text;
+  ui.busyText.textContent = text ?? '';
+});
 const ctx: AppContext = {
   ui,
+  busy,
   state: () => state,
   controller: () => controller,
   lastingNotices,

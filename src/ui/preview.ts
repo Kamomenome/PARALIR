@@ -19,10 +19,11 @@ export function previewer(ctx: AppContext) {
     if (injectFailure) job.mode = 'injected-failure';
     // The progress bar is there only while drawing (007 FR-707); a newer preview keeps it.
     const mine = ++seq;
+    const drawing = ctx.busy.start('draw');
     ui.progress.value = 0;
     ui.progress.hidden = false;
     const { promise } = ctx.controller().submit({ kind: 'preview', sourceId: src.id, W: PREVIEW_W, H: PREVIEW_H, ...job }, (done, total) => (ui.progress.value = done / total));
-    const r = await promise;
+    const r = await promise.finally(drawing);
     if (mine === seq) ui.progress.hidden = true;
     if (r.status === 'done') {
       ui.errors.replaceChildren();
