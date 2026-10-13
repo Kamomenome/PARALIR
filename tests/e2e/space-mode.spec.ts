@@ -26,7 +26,7 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
 
   // Fixing each world changes the picture; おまかせ comes back to the seed's world.
   const seen = new Set<string>([auto]);
-  for (const t of ['copies', 'dark', 'split']) {
+  for (const t of ['copies', 'split', 'mosaic']) {
     await page.getByTestId('space-world').selectOption(t);
     await waitForPreview(page);
     seen.add(await previewHash(page));

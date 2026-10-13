@@ -115,35 +115,3 @@ export function mipSampler(img: RgbImage) {
   };
 }
 
-/**
- * The photo's light colours (normalised so the strongest channel is 1): the mean of its brightest parts,
- * and a second, clearly different light colour of the photo. A black photo gives black.
- */
-export function lightColours(img: RgbImage): [number[], number[]] {
-  const lm = lightMap(img);
-  const sum = (i: number) => lm.r[i] + lm.g[i] + lm.b[i];
-  const idx = Array.from({ length: lm.w * lm.h }, (_, i) => i).sort((p, q) => sum(q) - sum(p) || p - q);
-  const top = idx.slice(0, Math.max(1, idx.length >> 6));
-  const mean = [0, 0, 0];
-  for (const i of top) {
-    mean[0] += lm.r[i];
-    mean[1] += lm.g[i];
-    mean[2] += lm.b[i];
-  }
-  const m = Math.max(...mean);
-  const first = m > 1e-9 ? mean.map((v) => v / m) : [0, 0, 0];
-  let far = top[0];
-  let fd = -1;
-  const ms = first[0] + first[1] + first[2] + 1e-9;
-  for (const i of idx.slice(0, Math.max(1, idx.length >> 3))) {
-    const s = sum(i) + 1e-9;
-    const d = Math.hypot(lm.r[i] / s - first[0] / ms, lm.b[i] / s - first[2] / ms);
-    if (d > fd) {
-      fd = d;
-      far = i;
-    }
-  }
-  const m2 = Math.max(lm.r[far], lm.g[far], lm.b[far]);
-  const second = m2 > 1e-9 ? [lm.r[far] / m2, lm.g[far] / m2, lm.b[far] / m2] : [0, 0, 0];
-  return [first, second];
-}

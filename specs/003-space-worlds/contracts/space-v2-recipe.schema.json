@@ -37,10 +37,8 @@
       "additionalProperties": false,
       "required": [
         "copies",
-        "dark",
         "split",
         "atmosphere",
-        "portal",
         "mosaic",
         "echo",
         "theme"
@@ -70,7 +68,8 @@
         "theme": {
           "type": "string"
         }
-      }
+      },
+      "description": "The versions of the engine that drew the work. dark and portal: works of the frozen engine space-v2-1 (017)."
     },
     "worldType": {
       "enum": [
@@ -82,7 +81,8 @@
         "mosaic",
         "echo",
         "theme"
-      ]
+      ],
+      "description": "dark and portal: works of the frozen engine space-v2-1 (017)."
     },
     "source": {
       "type": "object",

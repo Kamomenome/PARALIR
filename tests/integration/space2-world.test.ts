@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { COPIES_KINDS } from '../../src/engine/space-v2/worlds/copies/copies';
-import { DARK_KINDS } from '../../src/engine/space-v2/worlds/dark/dark';
 import { framePhoto, toRgba } from '../../src/engine/space-v2/shared/inplace';
 import { WORLD_TYPES, worldOdds, type WorldType } from '../../src/engine/space-v2/world';
 import { solid } from '../helpers/images';
@@ -18,12 +17,10 @@ describe('space-v2: three worlds over a rebuilt background (003 US1)', () => {
       const { world } = await spaceWorld(photo, { variation });
       if (variation < 40) types.add(world.type);
       inner.add(`copies:${world.copies.kind}`);
-      inner.add(`dark:${world.dark.kind}`);
       inner.add(`atmos:${world.atmosphere.kind}`);
     }
     expect([...types].sort()).toEqual([...WORLD_TYPES].sort());
     for (const k of COPIES_KINDS) expect(inner.has(`copies:${k}`), k).toBe(true);
-    for (const k of DARK_KINDS) expect(inner.has(`dark:${k}`), k).toBe(true);
     for (const k of ['light', 'sphere', 'droste']) expect(inner.has(`atmos:${k}`), k).toBe(true);
   });
 
@@ -46,9 +43,8 @@ describe('space-v2: three worlds over a rebuilt background (003 US1)', () => {
     }
   });
 
-  it('dark photos lean to darkness and light (SC-309)', () => {
+  it('the split world needs a subject (SC-309; the darkness world is gone, 017)', () => {
     const share = (odds: [WorldType, number][], t: WorldType) => odds.find(([k]) => k === t)![1] / odds.reduce((s, [, w]) => s + w, 0);
-    expect(share(worldOdds({ L: 0.15 }, true), 'dark')).toBeGreaterThan(1.3 * share(worldOdds({ L: 0.75 }, true), 'dark'));
     expect(share(worldOdds({ L: 0.45 }, false), 'split')).toBe(0);
   });
 

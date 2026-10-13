@@ -26,7 +26,7 @@ describe('space-v2 state (003 US2)', () => {
 
   it('fixing a world type and moving sliders keep the composition (FR-309, FR-310)', async () => {
     const s = await spaceState();
-    const t = setSpaceType(s, 'dark');
+    const t = setSpaceType(s, 'copies');
     expect(t.spaceWorld).toBe(s.spaceWorld);
     const u = await setSpaceControls(t, { light: 0.9, size: 0.2, count: 0.8, darkness: 0.1 });
     expect(u.spaceWorld).toBe(s.spaceWorld);
@@ -73,8 +73,10 @@ describe('space-v2 recipe (003 US3, FR-311)', () => {
     for (const k of schema.required) expect(Object.keys(r)).toContain(k);
     for (const k of Object.keys(r)) expect(Object.keys(schema.properties)).toContain(k);
     expect(schema.properties.engineVersion.const).toBe('space-v2');
+    // Required: what the current engine's recipes carry; the frozen engines' extra worlds are allowed too (017).
     expect([...schema.properties.algorithms.required].sort()).toEqual(Object.keys(SPACE_ALGORITHM_VERSIONS).sort());
+    expect(Object.keys(schema.properties.algorithms.properties)).toEqual(expect.arrayContaining(['dark', 'portal']));
     expect([...schema.properties.controls.required].sort()).toEqual([...SPACE_CONTROL_KEYS].sort());
-    expect(schema.properties.worldType.enum).toEqual(['auto', ...WORLD_TYPES]);
+    expect(schema.properties.worldType.enum).toEqual(expect.arrayContaining(['auto', ...WORLD_TYPES, 'dark', 'portal']));
   });
 });

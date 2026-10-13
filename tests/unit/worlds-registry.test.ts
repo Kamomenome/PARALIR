@@ -15,7 +15,7 @@ function files(dir: string): string[] {
 
 describe('worlds are registered in one place (009 FR-902, SC-901)', () => {
   it('the list of worlds, in the order the seed draws from, comes from the registry', () => {
-    expect(WORLDS.map((w) => w.type)).toEqual(['copies', 'dark', 'split', 'portal', 'mosaic', 'echo', 'theme']);
+    expect(WORLDS.map((w) => w.type)).toEqual(['copies', 'split', 'mosaic', 'echo', 'theme']);
     expect([...WORLD_TYPES]).toEqual(WORLDS.map((w) => w.type));
     expect(worldOdds({ L: 0.5 }, true).map(([t]) => t)).toEqual(WORLDS.map((w) => w.type));
   });

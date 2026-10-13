@@ -53,14 +53,6 @@ export function toDisplay(c: Rgb3, W: number, H: number, shoulder = true): Uint8
   return out;
 }
 
-/** A deterministic value in [0, 1) for an integer (film grain without random numbers at render time). */
-export function hash01(i: number): number {
-  let x = (i ^ 0x9e3779b9) >>> 0;
-  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0;
-  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0;
-  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
-}
-
 /** Alpha-over of a layer (linear colour and coverage) onto a frame, with a brightness factor for the layer. */
 export function over(dst: Rgb3, layer: { r: Float32Array; g: Float32Array; b: Float32Array; a: Float32Array }, k = 1): void {
   for (let i = 0; i < dst.r.length; i++) {

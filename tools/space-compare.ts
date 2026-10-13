@@ -60,7 +60,7 @@ for (let v = a; v <= b; v++) {
     png.data.set(rgba);
     const name = `v${v}-${type ?? world.type}.png`;
     writeFileSync(join(out, name), PNG.sync.write(png));
-    records.push({ variation: v, file: name, seedType: world.type, type: type ?? world.type, inner: { copies: world.copies.kind, dark: world.dark.kind, atmosphere: world.atmosphere.kind, shape: world.atmosphere.shape.kind }, renderMs: ms });
+    records.push({ variation: v, file: name, seedType: world.type, type: type ?? world.type, inner: { copies: world.copies.kind, atmosphere: world.atmosphere.kind, shape: world.atmosphere.shape.kind }, renderMs: ms });
     console.log(`${name}: ${ms} ms`);
   }
 }

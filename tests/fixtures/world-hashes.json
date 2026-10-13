@@ -25,9 +25,7 @@
   ],
   "versions": {
     "copies": "copies-v4",
-    "dark": "dark-v4",
     "split": "split-v4",
-    "portal": "portal-v2",
     "mosaic": "mosaic-v2",
     "echo": "echo-v1",
     "theme": "theme-v2",
@@ -41,22 +39,10 @@
       "rgbaSha256": "afeeb490411aed774856856ff8697756d6830f1443d9a83ebf78bfeb349d3ebe"
     },
     {
-      "world": "dark",
-      "variation": 0,
-      "lasso": false,
-      "rgbaSha256": "776fc01c37af502a2d6597c9ba87b79240a461f05adba8d894a35534875f0817"
-    },
-    {
       "world": "split",
       "variation": 0,
       "lasso": false,
       "rgbaSha256": "2db9fb76a00d85475d79d68baba6d2b9f219839e3374da2c20ef11bb897f2558"
-    },
-    {
-      "world": "portal",
-      "variation": 0,
-      "lasso": false,
-      "rgbaSha256": "ac8e5089571dfe1cad9aee93b2a523418da6e2fa1804e96687eb8431594ea7f3"
     },
     {
       "world": "mosaic",
@@ -83,22 +69,10 @@
       "rgbaSha256": "f8ba85609e83d3903ec27574337110f028201506136c7040ecffb336b7de37b3"
     },
     {
-      "world": "dark",
-      "variation": 1,
-      "lasso": false,
-      "rgbaSha256": "ecebef55d2856217130fb797675d84603dc3495e3006ebd03997e8d2f5fbdd56"
-    },
-    {
       "world": "split",
       "variation": 1,
       "lasso": false,
       "rgbaSha256": "a6a99709454f66fc75629594cd3c7fa8fdf77b3784d95b8945900f31bc0c8975"
-    },
-    {
-      "world": "portal",
-      "variation": 1,
-      "lasso": false,
-      "rgbaSha256": "c5ce25087e55bdb4d1040550f63266c54d3a4b64ef99b841899394347f75d987"
     },
     {
       "world": "mosaic",
@@ -125,22 +99,10 @@
       "rgbaSha256": "73aa8abb04c69ae013df872bf5dcf80832742d000d3e2cb11e2e8eb748ed062f"
     },
     {
-      "world": "dark",
-      "variation": 2,
-      "lasso": false,
-      "rgbaSha256": "c5fe2fbf5f010ec87f14ffed4a9acda1c918f00839292cad9ed51996babdd6d2"
-    },
-    {
       "world": "split",
       "variation": 2,
       "lasso": false,
       "rgbaSha256": "bb796f65c7a08590cbf0cd1d0bd0d18c29c6ed168c96571dd64da9360120fa73"
-    },
-    {
-      "world": "portal",
-      "variation": 2,
-      "lasso": false,
-      "rgbaSha256": "d4367d0d2364968c2e76a49515af7fc35ccf83ac9c2a464f36135b555557e95d"
     },
     {
       "world": "mosaic",
@@ -167,22 +129,10 @@
       "rgbaSha256": "6a4f5a702891ef5c9e1fe529f888264852e1e629fbc18e375cbde7480ec4954e"
     },
     {
-      "world": "dark",
-      "variation": 3,
-      "lasso": false,
-      "rgbaSha256": "b8ee71a8df8e7ea1e51b0299826aca5b8fc8bb5d537314e97991edbc5b324f50"
-    },
-    {
       "world": "split",
       "variation": 3,
       "lasso": false,
       "rgbaSha256": "0de076152e794e5d40ae355cbd373768453d3108acddc955badfe726bc1993b6"
-    },
-    {
-      "world": "portal",
-      "variation": 3,
-      "lasso": false,
-      "rgbaSha256": "5a167b5a709ac550ba099ad3fefea1b7991e1a18487ff67d7c4e9c1bf974b734"
     },
     {
       "world": "mosaic",
@@ -209,22 +159,10 @@
       "rgbaSha256": "a011df681a3b5d23542a4a3b88fe00e8af86800de81c14111ba933b335724128"
     },
     {
-      "world": "dark",
-      "variation": 4,
-      "lasso": false,
-      "rgbaSha256": "daf1b4a29a6d669b479b7ad65e5e450555008d2f829a43e1113d09eaf6047f84"
-    },
-    {
       "world": "split",
       "variation": 4,
       "lasso": false,
       "rgbaSha256": "5994c069ddfb82640daa868f7a9e4768b301d2450e3a8e2f15daf19649352c12"
-    },
-    {
-      "world": "portal",
-      "variation": 4,
-      "lasso": false,
-      "rgbaSha256": "9ea616cfd56c6d132230c29863772c1eaeb80c5136e4eb17ce4ed67eb87bc55d"
     },
     {
       "world": "mosaic",
@@ -251,22 +189,10 @@
       "rgbaSha256": "04f44d4e1a95d2f51b3404e366f646dae74061600c63378fcfe535eedd903912"
     },
     {
-      "world": "dark",
-      "variation": 5,
-      "lasso": false,
-      "rgbaSha256": "6b308c78e1ff449cd2b1278559042dc2600fcd2af246e2e0c80201eca32d070a"
-    },
-    {
       "world": "split",
       "variation": 5,
       "lasso": false,
       "rgbaSha256": "defe9d3154605b36cab143baf23ce1c91c0bc2200a489b9b1aa3b837361de274"
-    },
-    {
-      "world": "portal",
-      "variation": 5,
-      "lasso": false,
-      "rgbaSha256": "16cdf6ded79433dcac02bfab7af3ae052514a898a0f17ac965c155c7840a24dc"
     },
     {
       "world": "mosaic",
