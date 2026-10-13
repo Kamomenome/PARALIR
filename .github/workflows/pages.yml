@@ -25,9 +25,6 @@ jobs:
       - run: npx tsx tools/fetch-models.ts
       - run: npm test
       - run: npm run build
-      - run: npm run build:single
-      # The download version sits next to the web version.
-      - run: cp dist-single/index.html dist/paralir.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

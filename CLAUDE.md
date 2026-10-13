@@ -24,6 +24,6 @@
 - 版は `package.json` の version（画面は「ver 1.27」）。利用者に渡すたびに上げる
 - 公開リポジトリは https://github.com/Kamomenome/PARALIR（`origin` の `main`）。`main` は写真を含まない履歴から始めた（2026-10-13、009 FR-923）。
   手元のブランチ `002-spatial-world` には実在の写真を含む古い履歴があるので、**push しない**。コミットのメールは GitHub の非公開用アドレス（このリポジトリの設定）
-- 配るのは Web 版（`npm run build`、GitHub Pages）とダウンロード版（`npm run build:single`）。バックエンドは作らない（009 decision.md）
+- 配るのは Web 版だけ（`npm run build`、GitHub Pages）。HTML 1 枚の版（`npm run build:single`）は手元の確認用で公開しない。バックエンドは作らない（009 decision.md）
 - 計算は `src/engine/`（画面を知らない）。世界の足し方・描き方の版の上げ方（凍結）は [CONTRIBUTING.md](CONTRIBUTING.md)
 - 使っていないコードは残さない（`npx tsx tools/unused.ts` が 0 件。残すものは `tools/unused-allow.json` に理由つきで）

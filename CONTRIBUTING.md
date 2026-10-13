@@ -15,7 +15,7 @@ npm run dev                        # http://localhost:5173
 | `npm run typecheck` | 型チェック（使っていない変数・引数も見つける） |
 | `npm test` | Vitest（unit・integration。描かれる絵を画素で確かめるテストを含む） |
 | `npm run build` | Web 版 → `dist/` |
-| `npm run build:single` | ダウンロード版（HTML 1 枚）→ `dist-single/index.html` |
+| `npm run build:single` | HTML 1 枚の版 → `dist-single/index.html`（手元で file:// の動きを確かめる用。公開はしない） |
 | `npx playwright test` | e2e（開発サーバー、Web 版、ダウンロード版。先に 2 つのビルドが要る） |
 | `npx tsx tools/unused.ts` | 使われていないファイル・書き出しを探す（残すものは `tools/unused-allow.json` に理由つきで） |
 | `npx tsx tools/notices.ts` | `THIRD_PARTY_NOTICES.md` を作り直す（依存を変えたとき） |

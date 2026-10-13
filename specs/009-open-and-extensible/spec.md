@@ -60,7 +60,7 @@
 ### Web 公開
 
 - **FR-915**: 主なビルドを Web 版にする（`npm run build` → `dist/`、複数ファイル、相対パス）。AI モデルと wasm は別のファイルにし、ブラウザのキャッシュで版をまたいで使い回す
-- **FR-916**: ダウンロード版（HTML 1 枚）は `npm run build:single` → `dist-single/index.html` で残す
+- **FR-916**: HTML 1 枚の版は `npm run build:single` → `dist-single/index.html` で残す（手元の確認用。2026-10-13 利用者「DL はできなくてよくね」により公開はしない）
 - **FR-917**: どちらのビルドにも CSP を入れる（Web 版は同じ場所からの読み込みだけを許す）。外への通信 0 件を e2e で確かめる
 - **FR-918**: GitHub Actions を用意する: push のたびに型チェック・Vitest・ビルド・Playwright、main への push で Web 版を GitHub Pages に公開。
   リモートの作成と公開の有効化は利用者が行う（このリポジトリにはまだリモートがない）
