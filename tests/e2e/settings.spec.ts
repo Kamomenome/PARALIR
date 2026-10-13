@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { IMAGES, openDetails, showWorld, waitForPreview } from './helpers';
+import { IMAGES, showWorld, waitForPreview } from './helpers';
 
 test.use({ timezoneId: 'Asia/Tokyo' });
 
@@ -13,7 +13,6 @@ test('作品日時は写真を入れた時刻。入力・地域・「現在に�
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
   await showWorld(page);
-  await openDetails(page);
   const tech = page.getByTestId('tech');
   await tech.locator(':scope > summary').click();
   await expect(tech).toContainText('2026-10-11 14:30');
@@ -37,7 +36,6 @@ test('技術的な表示は閉じて始まり、AI の結果・作品日時・se
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/scene.png`);
   await waitForPreview(page);
   await showWorld(page);
-  await openDetails(page);
   const tech = page.getByTestId('tech');
   await expect(tech).toHaveJSProperty('open', false);
   await tech.locator(':scope > summary').click();

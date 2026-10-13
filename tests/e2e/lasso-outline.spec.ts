@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { IMAGES, previewHash, showWorld, waitForPreview } from './helpers';
+import { IMAGES, drawLoop, previewHash, showPhotoView, showWorld, waitForPreview } from './helpers';
 
 test('囲みの線だけを隠せて、絵は変わらない。「囲みを解除」で効果が取り消される（011 SC-1104）', async ({ page }) => {
   await page.goto('/?ai=off');
@@ -9,16 +9,12 @@ test('囲みの線だけを隠せて、絵は変わらない。「囲みを解�
   await page.getByTestId('space-world').selectOption('mosaic');
   await waitForPreview(page);
   const before = await previewHash(page);
-  const box = (await page.getByTestId('preview').boundingBox())!;
-  const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
-  await page.mouse.move(...at(0.6, 0.5));
-  await page.mouse.down();
-  for (let k = 1; k <= 16; k++) await page.mouse.move(...at(0.45 + 0.15 * Math.cos((2 * Math.PI * k) / 16), 0.5 + 0.2 * Math.sin((2 * Math.PI * k) / 16)));
-  await page.mouse.up();
+  // The lasso is drawn on the photo (019 FR-1901); its line and range show there.
+  await showPhotoView(page);
+  const photo = await previewHash(page);
+  await drawLoop(page, 0.45, 0.5, 0.15, false, 0.2);
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', /^lasso/, { timeout: 30_000 });
   await waitForPreview(page);
-  const lassoed = await previewHash(page);
-  expect(lassoed).not.toBe(before);
   const overlay = page.getByTestId('lasso-overlay');
   await expect(overlay).toBeVisible();
 
@@ -26,11 +22,15 @@ test('囲みの線だけを隠せて、絵は変わらない。「囲みを解�
   await expect(toggle).toHaveText('線を隠す');
   await toggle.click();
   await expect(overlay).toBeHidden();
+  await expect(page.getByTestId('lasso-range')).toBeHidden();
   await expect(toggle).toHaveText('線を出す');
-  expect(await previewHash(page)).toBe(lassoed);
+  expect(await previewHash(page)).toBe(photo);
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', /^lasso/);
   await toggle.click();
   await expect(overlay).toBeVisible();
+  await page.getByTestId('apply').click();
+  await waitForPreview(page);
+  expect(await previewHash(page)).not.toBe(before);
 
   await expect(page.getByTestId('lasso-clear')).toHaveText('囲みを解除');
   await page.getByTestId('lasso-clear').click();

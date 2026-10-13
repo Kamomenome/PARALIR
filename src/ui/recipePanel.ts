@@ -5,7 +5,7 @@ export interface RecipePanel {
   /** Saving sits next to exporting: it keeps a liked picture reproducible. */
   saveRoot: HTMLElement;
   status: HTMLElement;
-  /** Loading sits in 詳しい設定 (007 FR-703). */
+  /** Loading sits under the export, not folded away (019 FR-1913). */
   loadRoot: HTMLElement;
   onSave(fn: () => void): void;
   onLoad(fn: (text: string) => void): void;

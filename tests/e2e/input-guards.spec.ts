@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { IMAGES, waitForPreview } from './helpers';
+import { IMAGES, showPhotoView, waitForPreview } from './helpers';
 
 test('枠の外にファイルを落としても、ブラウザがファイルを開かない（008 FR-815, SC-805）', async ({ page }) => {
   await page.goto('/?ai=off');
@@ -22,6 +22,8 @@ test('囲みは左ボタンで、少しでも動かしたときだけ（008 FR-8
   // A template that uses the lasso (017 FR-1706).
   await page.getByTestId('space-world').selectOption('mosaic');
   await waitForPreview(page);
+  // The lasso is drawn on the photo (019 FR-1901).
+  await showPhotoView(page);
   const box = (await page.getByTestId('preview').boundingBox())!;
   const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
   const loop = async (button: 'left' | 'right', r: number) => {

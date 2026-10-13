@@ -5,6 +5,8 @@ import { blockExternalRequests } from '../app/offline';
 import { createInitialState, firstLook, restorePrevious, showPhoto, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
 import { chooseWorkers, createInlineWorker } from '../app/workers';
 import { systemTimeZone } from '../engine/common/time/snapshot';
+import { CURRENT_ENGINE } from '../engine/engines';
+import type { SpaceWorld } from '../engine/space-v2/world';
 import { buildAbout } from './about';
 import { createBusy } from './busy';
 import type { AppContext } from './context';
@@ -35,8 +37,9 @@ const exportPanel = buildExportPanel();
 const recipePanel = buildRecipePanel();
 const spacePanel = buildSpacePanel(controls.root);
 const tech = buildTechPanel(spacePanel.partsLine);
-const details = h('details', { class: 'group details', 'data-testid': 'details' }, h('summary', {}, '詳しい設定'), recipePanel.loadRoot, tech.root, buildAbout());
-ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, h('div', { class: 'row' }, exportPanel.root, recipePanel.saveRoot), exportPanel.status, recipePanel.status), details);
+// Not folded away under 詳しい設定 (019 FR-1913): the items as they are; 技術的な表示 and このアプリについて open by their headings.
+const more = h('div', { class: 'group more' }, recipePanel.loadRoot, tech.root, buildAbout());
+ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, h('div', { class: 'row' }, exportPanel.root, recipePanel.saveRoot), exportPanel.status, recipePanel.status), more);
 const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。「反映」を押すか、設定を変えると絵になります');
 ui.caption.append(photoHint, ...spacePanel.captionItems);
 
@@ -95,10 +98,13 @@ function refreshPanel() {
   tech.show(state);
   overlay.draw(state);
   controls.show(state.previous !== null, state.source !== null, state.showing);
-  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true);
+  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true, {
+    world: state.engineId === CURRENT_ENGINE ? (state.spaceWorld as SpaceWorld | null) : null,
+    current: state.engineId === CURRENT_ENGINE,
+  });
   spacePanel.showParts(state.source ? state.spaceParts : null);
-  spacePanel.showLasso(state.spaceRange);
-  lasso.draw(state.spaceLassos);
+  spacePanel.showLasso(state.spaceRange, state.showing);
+  lasso.draw(state);
   // Saving and exporting only once the world is on screen (011 FR-1103).
   const world = state.showing === 'world';
   recipePanel.setSaveEnabled(state.spaceWorld !== null && world);
@@ -118,7 +124,8 @@ function refreshPanel() {
 // Every action shows the world if the photo is still shown as it is (011 FR-1102).
 const act = (fn: (s: AppState) => AppState | Promise<AppState>) => ctx.update((s) => firstLook(s, fn, true));
 spacePanel.onSlider((patch) => act((s) => setSpaceControls(s, patch)));
-spacePanel.onLassoClear(() => act((s) => setLasso(s, null)));
+// On the photo the lassos go and the photo stays; on the world it is drawn again without them (019 FR-1905).
+spacePanel.onLassoClear(() => ctx.update((s) => setLasso(s, null)));
 spacePanel.onType((t) => act((s) => setSpaceType(s, t)));
 controls.onApply(() => ctx.update((s) => firstLook(s, (x) => x)));
 controls.onShowPhoto(() => ctx.update(showPhoto));

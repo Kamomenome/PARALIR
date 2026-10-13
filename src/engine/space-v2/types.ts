@@ -8,11 +8,15 @@ export interface SpaceControls {
   count: number;
   /** 背景の暗さ */
   darkness: number;
-  /** 画像特徴の影響 (re-weights the odds of the worlds and the photo-driven choices) */
+  /** 画像特徴の影響 (re-weights the odds of the worlds and the photo-driven choices); off the screen since 019 (FR-1911) */
   featureInfluence: number;
+  /** 光の形 (019 FR-1907): 0 round, 1 straight, the two mixed between. Absent: the shape drawn from the photo (FR-1908). */
+  lightShape?: number;
 }
 
 export const SPACE_CONTROL_KEYS = ['light', 'size', 'count', 'darkness', 'featureInfluence'] as const;
+/** Controls a work has only once they are moved (019 FR-1908). */
+export const OPTIONAL_SPACE_CONTROL_KEYS = ['lightShape'] as const;
 
 export const DEFAULT_SPACE_CONTROLS: SpaceControls = Object.freeze({
   light: 0.5,

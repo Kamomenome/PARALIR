@@ -3,7 +3,7 @@ import type { Hex64 } from './common/hash/sha256';
 import { seedInputJson, type SeedInput } from './common/seed/seeds';
 import type { TimeSnapshot } from './common/time/snapshot';
 import { buildSpaceSeedInput, deriveSpaceSeeds } from './space-v2/seeds';
-import { SPACE_CONTROL_KEYS, type SpaceControls } from './space-v2/types';
+import { OPTIONAL_SPACE_CONTROL_KEYS, SPACE_CONTROL_KEYS, type SpaceControls } from './space-v2/types';
 import { CURRENT_ENGINE, engineEntry, engineFor } from './engines';
 import { PARTS_VERSION } from './common/parts/types';
 
@@ -150,7 +150,13 @@ export function validateSpaceRecipe(r: any): string[] {
       const v = r.controls[k];
       if (typeof v !== 'number' || !(v >= 0 && v <= 1)) e.push(`controls.${k}: 0〜1 の数値ではありません`);
     }
-    for (const k of Object.keys(r.controls)) if (!(SPACE_CONTROL_KEYS as readonly string[]).includes(k)) e.push(`controls.${k}: 不明な項目です`);
+    // Only once moved (019 FR-1908).
+    for (const k of OPTIONAL_SPACE_CONTROL_KEYS) {
+      const v = r.controls[k];
+      if (v !== undefined && (typeof v !== 'number' || !(v >= 0 && v <= 1))) e.push(`controls.${k}: 0〜1 の数値ではありません`);
+    }
+    const known: readonly string[] = [...SPACE_CONTROL_KEYS, ...OPTIONAL_SPACE_CONTROL_KEYS];
+    for (const k of Object.keys(r.controls)) if (!known.includes(k)) e.push(`controls.${k}: 不明な項目です`);
   }
   const o = r.output;
   if (!isObj(o) || !Number.isInteger(o.width) || !Number.isInteger(o.height) || !(o.width >= 1 && o.width <= 8192 && o.height >= 1 && o.height <= 8192) || o.format !== 'png' || !['standard', 'supersample-3'].includes(o.qualityMode)) {

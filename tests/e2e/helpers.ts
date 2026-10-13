@@ -30,15 +30,29 @@ export async function previewHash(page: Page): Promise<string> {
   });
 }
 
-/** Opens 「詳しい設定」 (007 FR-703), where the artwork time and recipe loading live. */
-export async function openDetails(page: Page) {
-  const details = page.getByTestId('details');
-  if (!(await details.evaluate((d: HTMLDetailsElement) => d.open))) await details.locator(':scope > summary').click();
-}
-
 /** A new photo is shown as it is until the first action (011): 「反映」 shows the picture (017 FR-1705). */
 export async function showWorld(page: Page) {
   if ((await page.getByTestId('preview').getAttribute('data-showing')) !== 'photo') return;
   await page.getByTestId('apply').click();
   await waitForPreview(page);
+}
+
+/** 「元の画像を表示」: the photo as it is, where the lasso is drawn (019 FR-1901). */
+export async function showPhotoView(page: Page) {
+  if ((await page.getByTestId('preview').getAttribute('data-showing')) === 'photo') return;
+  await page.getByTestId('show-photo').click();
+  await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'photo');
+  await waitForPreview(page);
+}
+
+/** A rough loop of 16 points around (cx, cy) on the picture, in fractions of its box; Shift adds it (013B FR-1310). */
+export async function drawLoop(page: Page, cx: number, cy: number, r: number, shift = false, ry = r) {
+  const box = (await page.getByTestId('preview').boundingBox())!;
+  const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
+  if (shift) await page.keyboard.down('Shift');
+  await page.mouse.move(...at(cx + r, cy));
+  await page.mouse.down();
+  for (let k = 1; k <= 16; k++) await page.mouse.move(...at(cx + r * Math.cos((2 * Math.PI * k) / 16), cy + ry * Math.sin((2 * Math.PI * k) / 16)));
+  await page.mouse.up();
+  if (shift) await page.keyboard.up('Shift');
 }

@@ -1,7 +1,7 @@
 import type { ImageFeatures } from '../../../common/analysis/features';
 import type { RgbImage } from '../../../common/image/normalize';
 import type { SeedInput } from '../../../common/seed/seeds';
-import { lightShapeFrom, type LightShape } from '../../shared/atmosphere';
+import { lightShapeFrom, mixInto, shapeVariants, sphereTiltFor, type LightShape } from '../../shared/atmosphere';
 import { newRgb, srgbToLinear, type Rgb3 } from '../../shared/color';
 import { renderMosaic, type MosaicParams } from '../mosaic/mosaic';
 import type { PhotoObject } from '../../shared/object';
@@ -32,17 +32,33 @@ export async function buildTheme(stream: Uint8Array, seedInput: SeedInput, featu
   const [[d], sh] = await Promise.all([drawsFrom(stream, 'theme/foreground', 1), drawsFrom(stream, 'theme/shape', 8)]);
   const p9Seeds = await deriveP9Seeds(['space-v1', ...seedInput.slice(1)] as SeedInput);
   const shape = lightShapeFrom(sh);
-  let p9 = { ...(await composeSpace(p9Seeds, features, { ...P9_CONTROLS }, img)), shape };
-  // Only round light looks into the sphere's pole (a radial tunnel); the other shapes see its horizon (as in 003).
-  if (shape.kind !== 'ring' && p9.backgrounds.sphere.tilt === Math.PI / 2) p9 = { ...p9, backgrounds: { ...p9.backgrounds, sphere: { ...p9.backgrounds.sphere, tilt: 0 } } };
+  const p9 = withShape({ ...(await composeSpace(p9Seeds, features, { ...P9_CONTROLS }, img)), shape }, shape);
   // Straight light: not the foregrounds that are radial by themselves (they would look round again).
   const choices = shape.kind === 'ring' ? THEME_FOREGROUNDS : THEME_FOREGROUNDS.filter((f) => f !== 'surface' && f !== 'kaleidoscope');
   return { p9, foreground: choices[Math.min(choices.length - 1, Math.floor(d * choices.length))], shape };
 }
 
-/** The Phase 9 picture of the theme world, in linear colour (the ground the theme is laid on). */
-export function themeBase(t: ThemeParams, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number): Rgb3 {
-  const { rgba } = renderSpace(t.p9, img, features, { ...P9_CONTROLS }, 'composite', W, H, { quality, pipeline: { foreground: t.foreground, merge: 'depth' } });
+/** The Phase 9 composition with a light shape (as in 003, only round light looks into the sphere's pole). */
+function withShape(p9: SpaceComposition, shape: LightShape): SpaceComposition {
+  return { ...p9, shape, backgrounds: { ...p9.backgrounds, sphere: sphereTiltFor(p9.backgrounds.sphere, shape) } };
+}
+
+/**
+ * The Phase 9 picture of the theme world, in linear colour (the ground the theme is laid on). 光の形 at `shape` (019
+ * FR-1907): absent or at the drawn end, as drawn; between, the round and the straight ground mixed. The foreground
+ * chosen for the drawn shape stays (FR-1909).
+ */
+export function themeBase(t: ThemeParams, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number, shape?: number): Rgb3 {
+  const v = shapeVariants(t.shape);
+  if (shape === undefined || shape === v.drawn) return groundOf(t.p9, t.foreground, img, features, W, H, quality);
+  if (shape <= 0 || shape >= 1) return groundOf(withShape(t.p9, shape <= 0 ? v.ring : v.straight), t.foreground, img, features, W, H, quality);
+  const out = groundOf(withShape(t.p9, v.ring), t.foreground, img, features, W, H, quality);
+  mixInto(out, groundOf(withShape(t.p9, v.straight), t.foreground, img, features, W, H, quality), shape);
+  return out;
+}
+
+function groundOf(p9: SpaceComposition, foreground: ForegroundAlgo, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number): Rgb3 {
+  const { rgba } = renderSpace(p9, img, features, { ...P9_CONTROLS }, 'composite', W, H, { quality, pipeline: { foreground, merge: 'depth' } });
   const out = newRgb(W * H);
   for (let i = 0; i < W * H; i++) {
     out.r[i] = srgbToLinear(rgba[4 * i] / 255);
@@ -63,5 +79,5 @@ export function renderTheme(
   H: number,
   quality: number,
 ): { rgba: Uint8ClampedArray; objects: Float32Array } {
-  return renderMosaic(mosaic, range, img, c, W, H, themeBase(t, img, features, W, H, quality));
+  return renderMosaic(mosaic, range, img, c, W, H, themeBase(t, img, features, W, H, quality, c.lightShape));
 }

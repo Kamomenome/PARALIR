@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { previewHash, waitForPreview } from './helpers';
+import { previewHash, showPhotoView, waitForPreview } from './helpers';
 
 test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで再現、外部通信 0 件（005 SC-504）', async ({ page, baseURL }) => {
   test.setTimeout(300_000);
@@ -18,7 +18,8 @@ test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで�
   const before = await previewHash(page);
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', 'none');
 
-  // A rough loop over the left part of the picture.
+  // A rough loop over the left part of the photo (019 FR-1901), then 反映.
+  await showPhotoView(page);
   const box = (await page.getByTestId('preview').boundingBox())!;
   const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
   await page.mouse.move(...at(0.15, 0.35));
@@ -28,8 +29,8 @@ test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで�
     await page.mouse.move(...at(0.27 + 0.12 * Math.cos(a + Math.PI), 0.45 + 0.15 * Math.sin(a + Math.PI)));
   }
   await page.mouse.up();
-  await waitForPreview(page);
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', /^(lasso|lasso\+ai)$/, { timeout: 60_000 });
+  await page.getByTestId('apply').click();
   await waitForPreview(page);
   const lassoed = await previewHash(page);
   expect(lassoed).not.toBe(before);

@@ -1,6 +1,6 @@
 import type { RenderContext } from '../worldDef';
 import type { SpaceControls } from '../types';
-import { renderAtmosphere } from './atmosphere';
+import { renderShapedAtmosphere } from './atmosphere';
 import { Hdr, bloom, chiaroscuro, tonemap, vignette } from './hdr';
 
 /**
@@ -11,7 +11,8 @@ export function backdrop(ctx: RenderContext, dark: boolean) {
   const c = ctx.controls;
   const look = { glow: c.light, fog: 0.5 };
   const hdr = new Hdr(ctx.W, ctx.H);
-  const light = renderAtmosphere(hdr, ctx.world.atmosphere, ctx.img, look, ctx.quality);
+  // 光の形 (019 FR-1907): the drawn shape unless it was moved.
+  const light = renderShapedAtmosphere(hdr, ctx.world.atmosphere, ctx.img, look, ctx.quality, c.lightShape);
   const bgK = dark ? 0.035 * (1.4 - c.darkness) : 1.3 - 0.6 * c.darkness;
   for (let i = 0; i < ctx.W * ctx.H; i++) {
     hdr.r[i] *= bgK;
