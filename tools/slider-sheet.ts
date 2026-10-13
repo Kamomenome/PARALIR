@@ -21,7 +21,7 @@ const PORT = 5197;
 const BASE = `http://localhost:${PORT}`;
 
 async function done(page: Page) {
-  await page.waitForFunction(() => document.querySelector('[data-testid="preview"]')?.getAttribute('data-render-state') === 'done', null, { timeout: 180_000 });
+  await page.waitForFunction(() => document.querySelector('[data-testid="preview"]')?.getAttribute('data-render-state') === 'done', null, { timeout: 600_000 });
 }
 
 async function setSlider(page: Page, key: string, v: number) {
@@ -64,7 +64,7 @@ try {
       await page.goto(BASE);
       await page.setInputFiles('[data-testid="file-input"]', file);
       await done(page);
-      await page.waitForFunction(() => document.querySelector('[data-testid="parts-status"]')?.getAttribute('data-state') !== 'pending', null, { timeout: 180_000 });
+      await page.waitForFunction(() => document.querySelector('[data-testid="parts-status"]')?.getAttribute('data-state') !== 'pending', null, { timeout: 600_000 });
       const option = page.getByTestId('space-world').locator(`option[value="${w.type}"]`);
       if (await option.isDisabled()) {
         skipped.push(`${name}: ${w.label}（主役が見つからない写真では選べません）`);
