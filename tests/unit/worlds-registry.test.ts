@@ -35,7 +35,10 @@ describe('worlds are registered in one place (009 FR-902, SC-901)', () => {
   });
 
   it("no code outside a world's folder names it (adding one touches its folder and the registry line)", () => {
-    const src = files('src').filter((f) => !f.replace(/\\/g, '/').startsWith('src/engine/space-v2/worlds/'));
+    // Frozen engines and the list of engines name their worlds on purpose: they stand for what was (017).
+    const src = files('src')
+      .map((f) => f.replace(/\\/g, '/'))
+      .filter((f) => !f.startsWith('src/engine/space-v2/worlds/') && !f.startsWith('src/engine/frozen/') && f !== 'src/engine/engines.ts');
     for (const w of WORLDS) {
       const outside = src.filter((f) => readFileSync(f, 'utf8').includes(`'${w.type}'`));
       expect(outside, w.type).toEqual([]);

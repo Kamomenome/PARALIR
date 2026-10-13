@@ -44,8 +44,14 @@ export const CURRENT_ENGINE = spaceV2.id;
 
 const entries: EngineEntry[] = [
   { id: spaceV2.id, algorithms: spaceV2.algorithms, worldTypes: spaceV2.worlds.map((w) => w.type), load: async () => spaceV2 },
-  // Frozen engines go here, newest first, e.g.
-  // { id: 'space-v2-1', algorithms: …, worldTypes: […], load: () => import('./frozen/space-v2-1').then((m) => m.engine) },
+  // Frozen engines, newest first (CONTRIBUTING.md). Their versions are written here so a recipe finds its engine without loading it.
+  {
+    // Up to ver 1.30: the portal and the darkness included (017 FR-1703).
+    id: 'space-v2-1',
+    algorithms: { copies: 'copies-v4', dark: 'dark-v4', split: 'split-v4', portal: 'portal-v2', mosaic: 'mosaic-v2', echo: 'echo-v1', theme: 'theme-v2', atmosphere: 'atmosphere-v2' },
+    worldTypes: ['copies', 'dark', 'split', 'portal', 'mosaic', 'echo', 'theme'],
+    load: () => import('./frozen/space-v2-1').then((m) => m.engine),
+  },
 ];
 
 export function engineEntry(id: string): EngineEntry | undefined {
