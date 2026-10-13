@@ -46,6 +46,13 @@ const entries: EngineEntry[] = [
   { id: spaceV2.id, algorithms: spaceV2.algorithms, worldTypes: spaceV2.worlds.map((w) => w.type), load: async () => spaceV2 },
   // Frozen engines, newest first (CONTRIBUTING.md). Their versions are written here so a recipe finds its engine without loading it.
   {
+    // ver 1.31: the rectangles' hole filled smoothly (015 FR-1504).
+    id: 'space-v2-2',
+    algorithms: { copies: 'copies-v4', split: 'split-v4', mosaic: 'mosaic-v2', echo: 'echo-v1', theme: 'theme-v2', atmosphere: 'atmosphere-v2' },
+    worldTypes: ['copies', 'split', 'mosaic', 'echo', 'theme'],
+    load: () => import('./frozen/space-v2-2').then((m) => m.engine),
+  },
+  {
     // Up to ver 1.30: the portal and the darkness included (017 FR-1703).
     id: 'space-v2-1',
     algorithms: { copies: 'copies-v4', dark: 'dark-v4', split: 'split-v4', portal: 'portal-v2', mosaic: 'mosaic-v2', echo: 'echo-v1', theme: 'theme-v2', atmosphere: 'atmosphere-v2' },
