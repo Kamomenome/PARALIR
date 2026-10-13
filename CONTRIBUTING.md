@@ -61,4 +61,4 @@ src/
 
 - `.github/workflows/ci.yml`: push のたびに型チェック・テスト・ビルド・e2e
 - `.github/workflows/pages.yml`: `main` への push で Web 版を GitHub Pages に公開（リポジトリの Settings → Pages で「GitHub Actions」を選ぶ）
-- 版は `package.json` の version（画面では「ver 1.30」）。利用者に渡すたびに上げる
+- 版は `package.json` の version（画面では「ver 1.31」）。利用者に渡すたびに上げる

@@ -9,6 +9,7 @@ export const split: WorldDef<'split', FragmentParams> = {
   note: '被写体を切り分けて重ねる',
   version: 'split-v4',
   needsSubject: true,
+  controls: ['light', 'size', 'darkness'],
   odds: (_light, hasSubject) => (hasSubject ? 0.8 : 0),
   build: (x) => buildSplit(x.seeds.streams.split),
   render: (x) => {

@@ -241,6 +241,11 @@ export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Pro
   return apply ? fn(shown) : shown;
 }
 
+/** 「元の画像を表示」: the photo as it is, every setting kept (017 FR-1705); 「反映」 (firstLook) shows the picture again. */
+export function showPhoto(s: AppState): AppState {
+  return { ...s, showing: 'photo' };
+}
+
 /** The next variation of the same photo and time (R04). No button since 013; old recipes and the pixel records use variations. */
 export function nextWorld(s: AppState): Promise<AppState> {
   return changeSeed(s, { variationIndex: s.variationIndex + 1 });

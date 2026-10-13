@@ -8,7 +8,7 @@ async function slider(page: import('@playwright/test').Page, key: string, v: num
   }, v);
 }
 
-test('「別の世界」と「別案」がなく、Space で絵は変わらない。写真のときだけ「変える」がある（013 SC-1305）', async ({ page }) => {
+test('「別の世界」と「別案」がなく、Space で絵は変わらない。写真のときは「反映」で絵になる（013 SC-1305, 017）', async ({ page }) => {
   await page.goto('/?ai=off');
   await expect(page.getByTestId('next-world')).toHaveCount(0);
   await expect(page.getByTestId('variation')).toHaveCount(0);
@@ -18,11 +18,11 @@ test('「別の世界」と「別案」がなく、Space で絵は変わらな�
   await page.locator('body').press(' ');
   await page.waitForTimeout(500);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'photo');
-  await expect(page.getByTestId('transform')).toBeVisible();
-  await page.getByTestId('transform').click();
+  await expect(page.getByTestId('apply')).toBeEnabled();
+  await page.getByTestId('apply').click();
   await waitForPreview(page);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'world');
-  await expect(page.getByTestId('transform')).toBeHidden();
+  await expect(page.getByTestId('apply')).toBeDisabled();
 });
 
 test('「ひとつ戻す」（Ctrl+Z）で直前の変更が戻る。同じスライダーの続けての変更は 1 手（013 SC-1306）', async ({ page }) => {

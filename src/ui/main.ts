@@ -2,7 +2,7 @@ import './style.css';
 import { useOnDeviceAi } from '../ai/provider';
 import { RenderController } from '../app/controller';
 import { blockExternalRequests } from '../app/offline';
-import { createInitialState, firstLook, restorePrevious, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
+import { createInitialState, firstLook, restorePrevious, showPhoto, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
 import { chooseWorkers, createInlineWorker } from '../app/workers';
 import { systemTimeZone } from '../engine/common/time/snapshot';
 import { buildAbout } from './about';
@@ -37,9 +37,7 @@ const spacePanel = buildSpacePanel(controls.root);
 const tech = buildTechPanel(spacePanel.partsLine);
 const details = h('details', { class: 'group details', 'data-testid': 'details' }, h('summary', {}, '詳しい設定'), recipePanel.loadRoot, tech.root, buildAbout());
 ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, h('div', { class: 'row' }, exportPanel.root, recipePanel.saveRoot), exportPanel.status, recipePanel.status), details);
-// 「変える」: from the photo as it is to the world (013 FR-1307); shown only while the photo is.
-const transform = h('button', { class: 'small', 'data-testid': 'transform' }, '変える');
-const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。', transform, ' を押すか、設定を変えると絵が変わります');
+const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。「反映」を押すか、設定を変えると絵になります');
 ui.caption.append(photoHint, ...spacePanel.captionItems);
 
 // Workers are probed in the background; every change waits for them in the queue, so nothing done early is lost.
@@ -85,7 +83,7 @@ const ctx: AppContext = {
 const renderPreview = previewer(ctx);
 const overlay = partsOverlay(ui);
 tech.onShowParts((on) => overlay.set(on, state));
-const lasso = wireLasso(ctx);
+const lasso = wireLasso(ctx, () => spacePanel.lassoWorks());
 let outlineVisible = true;
 spacePanel.onOutline(() => {
   outlineVisible = !outlineVisible;
@@ -96,7 +94,7 @@ spacePanel.onOutline(() => {
 function refreshPanel() {
   tech.show(state);
   overlay.draw(state);
-  controls.show(state.previous !== null);
+  controls.show(state.previous !== null, state.source !== null, state.showing);
   spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true);
   spacePanel.showParts(state.source ? state.spaceParts : null);
   spacePanel.showLasso(state.spaceRange);
@@ -119,7 +117,8 @@ const act = (fn: (s: AppState) => AppState | Promise<AppState>) => ctx.update((s
 spacePanel.onSlider((patch) => act((s) => setSpaceControls(s, patch)));
 spacePanel.onLassoClear(() => act((s) => setLasso(s, null)));
 spacePanel.onType((t) => act((s) => setSpaceType(s, t)));
-transform.addEventListener('click', () => ctx.update((s) => firstLook(s, (x) => x)));
+controls.onApply(() => ctx.update((s) => firstLook(s, (x) => x)));
+controls.onShowPhoto(() => ctx.update(showPhoto));
 controls.onRestore(() => ctx.update(restorePrevious));
 // Ctrl+Z / ⌘Z: ひとつ戻す, unless the focused control has its own undo (007 FR-708).
 document.addEventListener('keydown', (e) => {

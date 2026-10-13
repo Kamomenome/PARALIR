@@ -36,12 +36,18 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(auto);
 
-  // A slider changes the picture without changing the world.
+  // A slider changes the picture without changing the world (in a template the darkness slider works in, 017).
+  await page.getByTestId('space-world').selectOption('copies');
+  await waitForPreview(page);
+  const copies = await previewHash(page);
   await page.getByTestId('space-control-darkness').fill('0.95');
   await waitForPreview(page);
+  expect(await previewHash(page)).not.toBe(copies);
   await page.getByTestId('space-control-darkness').fill('0.5');
   await waitForPreview(page);
-  expect(await previewHash(page)).toBe(auto);
+  expect(await previewHash(page)).toBe(copies);
+  await page.getByTestId('space-world').selectOption('auto');
+  await waitForPreview(page);
 
   // The same photo put in again at another time is another composition (別の世界 is gone 013, artwork time 016).
   await page.clock.setFixedTime(new Date('2026-10-12T00:30:00Z'));

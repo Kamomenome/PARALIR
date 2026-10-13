@@ -36,9 +36,9 @@ export async function openDetails(page: Page) {
   if (!(await details.evaluate((d: HTMLDetailsElement) => d.open))) await details.locator(':scope > summary').click();
 }
 
-/** A new photo is shown as it is until the first action (011): 「変える」 shows the world (013 FR-1307). */
+/** A new photo is shown as it is until the first action (011): 「反映」 shows the picture (017 FR-1705). */
 export async function showWorld(page: Page) {
   if ((await page.getByTestId('preview').getAttribute('data-showing')) !== 'photo') return;
-  await page.getByTestId('transform').click();
+  await page.getByTestId('apply').click();
   await waitForPreview(page);
 }

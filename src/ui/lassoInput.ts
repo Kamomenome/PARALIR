@@ -8,7 +8,7 @@ import type { AppContext } from './context';
  * The overlay fills the picture's box, which always has the canvas's shape. Its line can be hidden while the
  * lasso keeps working (011 FR-1105); it is shown while drawing. The line is never part of an export.
  */
-export function wireLasso(ctx: AppContext): { draw(lasso: Lasso | null): void; setOutline(visible: boolean): void } {
+export function wireLasso(ctx: AppContext, lassoWorks: () => boolean = () => true): { draw(lasso: Lasso | null): void; setOutline(visible: boolean): void } {
   const { ui } = ctx;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'lasso');
@@ -54,7 +54,8 @@ export function wireLasso(ctx: AppContext): { draw(lasso: Lasso | null): void; s
 
   ui.canvas.addEventListener('pointerdown', (e) => {
     // The main button only: a right click opens the menu, it does not start a loop.
-    if (!ctx.state().source || e.button !== 0) return;
+    // Only where the template uses the lasso's range (017 FR-1706).
+    if (!ctx.state().source || e.button !== 0 || !lassoWorks()) return;
     const p = toPhoto(e);
     if (!p) return;
     dragging = [p];

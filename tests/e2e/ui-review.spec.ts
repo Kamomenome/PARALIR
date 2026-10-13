@@ -72,7 +72,7 @@ test('写真の入れ方: 選ぶ前は「写真を選ぶ」、ドロップで入
 test('パネルの順番: 世界 → ひとつ戻す → スライダー → 書き出し、レシピの読み込みは詳しい設定の中（007 SC-703）', async ({ page }) => {
   await withPhoto(page);
   const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
-  const order = [await y('space-world'), await y('restore-previous'), await y('space-control-light'), await y('export')];
+  const order = [await y('space-world'), await y('restore-previous'), await y('space-control-featureInfluence'), await y('export')];
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   await expect(page.getByTestId('recipe-load')).toBeHidden();
   await page.getByTestId('details').locator(':scope > summary').click();
@@ -83,6 +83,9 @@ test('パネルの順番: 世界 → ひとつ戻す → スライダー → 書
 
 test('絵についての案内は絵の下で控えめ、言葉は使う人の言葉（007 SC-704）', async ({ page }) => {
   await withPhoto(page);
+  // A template that uses the lasso, so its hint is there (017 FR-1706).
+  await page.getByTestId('space-world').selectOption('mosaic');
+  await waitForPreview(page);
   const pic = (await page.getByTestId('preview').boundingBox())!;
   // The lasso's hint stays under the picture; what the AI saw moved to 技術的な表示 (016 FR-1604).
   const box = (await page.getByTestId('lasso-status').boundingBox())!;

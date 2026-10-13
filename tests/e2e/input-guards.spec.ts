@@ -19,6 +19,9 @@ test('囲みは左ボタンで、少しでも動かしたときだけ（008 FR-8
   await page.goto('/?ai=off');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/gradient-64x48.png`);
   await waitForPreview(page);
+  // A template that uses the lasso (017 FR-1706).
+  await page.getByTestId('space-world').selectOption('mosaic');
+  await waitForPreview(page);
   const box = (await page.getByTestId('preview').boundingBox())!;
   const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
   const loop = async (button: 'left' | 'right', r: number) => {

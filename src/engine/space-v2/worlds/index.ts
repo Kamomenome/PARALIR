@@ -10,3 +10,6 @@ import { theme } from './theme';
  * The portal and the darkness were taken out in 017 (they live on in the frozen engine space-v2-1).
  */
 export const WORLDS = [copies, split, mosaic, echo, theme] as const;
+
+/** The world on screen: the one fixed, else the one おまかせ drew; undefined for a frozen engine's world. */
+export const worldOf = (type: string) => WORLDS.find((w) => w.type === type);

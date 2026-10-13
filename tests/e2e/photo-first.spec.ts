@@ -31,9 +31,9 @@ test('写真を入れると元の写真が出て、案内があり、保存は�
   await expect(page.getByTestId('recipe-save')).toBeDisabled();
 });
 
-test('「変える」で世界になる。スライダーや囲みでも世界になる（011 SC-1102, 013 FR-1307）', async ({ page }) => {
+test('「反映」で絵になる。スライダーでも絵になる（011 SC-1102, 017 FR-1705）', async ({ page }) => {
   await withPhoto(page);
-  await page.getByTestId('transform').click();
+  await page.getByTestId('apply').click();
   await waitForPreview(page);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'world');
   await expect(page.getByTestId('photo-hint')).toBeHidden();
@@ -46,14 +46,4 @@ test('「変える」で世界になる。スライダーや囲みでも世界�
   });
   await waitForPreview(page);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'world');
-
-  // And a lasso drawn over the photo.
-  await withPhoto(page);
-  const box = (await page.getByTestId('preview').boundingBox())!;
-  const at = (fx: number, fy: number) => [box.x + fx * box.width, box.y + fy * box.height] as const;
-  await page.mouse.move(...at(0.5 + 0.2, 0.5));
-  await page.mouse.down();
-  for (let k = 1; k <= 12; k++) await page.mouse.move(...at(0.5 + 0.2 * Math.cos((2 * Math.PI * k) / 12), 0.5 + 0.2 * Math.sin((2 * Math.PI * k) / 12)));
-  await page.mouse.up();
-  await expect(page.getByTestId('preview')).toHaveAttribute('data-showing', 'world', { timeout: 30_000 });
 });
