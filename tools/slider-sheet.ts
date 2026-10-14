@@ -111,10 +111,10 @@ const sections = worlds.map((w) => {
 });
 writeFileSync(
   join(out, 'index.html'),
-  `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>スライダーの比較（019）</title><style>
+  `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>変貌の比較（021）</title><style>
 body{font-family:system-ui,sans-serif;background:#1b1b1b;color:#ddd;margin:24px}h2{margin-top:40px}table{border-collapse:collapse}
 th,td{padding:4px;vertical-align:middle}th{font-weight:normal;color:#aaa;text-align:left}img{width:320px;display:block}</style></head><body>
-<h1>スライダーの比較（019 FR-1912）</h1><p>モードごとに、出るスライダーを 1 つずつ 0・0.5・1 に動かした絵（ほかは最初の位置）。作品日時 2026-10-13 12:00。</p>
+<h1>変貌の比較（021 FR-2107）</h1><p>モードごとに、変貌を 0・0.25・0.5・0.75・1 に動かした絵。0.5 が今までの絵。作品日時 2026-10-13 12:00。</p>
 ${skipped.length ? `<p>出せなかったもの: ${skipped.map(esc).join('、')}</p>` : ''}${sections.join('')}</body></html>\n`,
 );
 console.log(`${join(out, 'index.html')} (${rows.length} sliders)`);
