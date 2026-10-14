@@ -236,7 +236,8 @@ export function lightShape(a: Pick<Atmosphere, 'shape' | 'layout' | 'voidRadius'
       if (v > best) best = v;
       near = Math.min(near, d);
     }
-    return { intensity: 0.05 + 1.9 * best, voidFactor: 1, s: Math.atan2(fy, fx) / Math.PI + 1, d: near };
+    // Read the photo's light by the angle folded at the vertical, so it never jumps (no straight seam).
+    return { intensity: 0.05 + 1.9 * best, voidFactor: 1, s: Math.abs(Math.atan2(fy, fx)) / Math.PI, d: near };
   }
   // Flames: tongues along a line, swaying with noise along it and flickering.
   const tx = Math.cos(sh.angle);
