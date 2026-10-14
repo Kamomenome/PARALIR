@@ -38,14 +38,14 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(auto);
 
-  // A slider changes the picture without changing the world (in a mode 主役の大きさ works in, 017).
+  // 変貌 changes the picture without changing the world (021).
   await page.getByTestId('space-world').selectOption('copies');
   await waitForPreview(page);
   const copies = await previewHash(page);
-  await page.getByTestId('space-control-size').fill('0.95');
+  await page.getByTestId('space-control-morph').fill('0.95');
   await waitForPreview(page);
   expect(await previewHash(page)).not.toBe(copies);
-  await page.getByTestId('space-control-size').fill('0.5');
+  await page.getByTestId('space-control-morph').fill('0.5');
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(copies);
   await page.getByTestId('space-world').selectOption(drawn);

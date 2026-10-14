@@ -1,6 +1,6 @@
 import type { RenderContext } from '../worldDef';
 import { FIXED_LOOK } from '../types';
-import { renderShapedAtmosphere } from './atmosphere';
+import { renderAtmosphere } from './atmosphere';
 import { Hdr, bloom, chiaroscuro, tonemap, vignette } from './hdr';
 
 /**
@@ -8,11 +8,9 @@ import { Hdr, bloom, chiaroscuro, tonemap, vignette } from './hdr';
  * (020 FR-2003); in the darkness-and-light world it sank almost to black.
  */
 export function backdrop(ctx: RenderContext, dark: boolean) {
-  const c = ctx.controls;
   const look = { glow: FIXED_LOOK.light, fog: 0.5 };
   const hdr = new Hdr(ctx.W, ctx.H);
-  // 光の形 (019 FR-1907): the drawn shape unless it was moved.
-  const light = renderShapedAtmosphere(hdr, ctx.world.atmosphere, ctx.img, look, ctx.quality, c.lightShape);
+  const light = renderAtmosphere(hdr, ctx.world.atmosphere, ctx.img, look, ctx.quality);
   const bgK = dark ? 0.035 * (1.4 - FIXED_LOOK.darkness) : 1.3 - 0.6 * FIXED_LOOK.darkness;
   for (let i = 0; i < ctx.W * ctx.H; i++) {
     hdr.r[i] *= bgK;

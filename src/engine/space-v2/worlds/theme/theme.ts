@@ -1,7 +1,7 @@
 import type { ImageFeatures } from '../../../common/analysis/features';
 import type { RgbImage } from '../../../common/image/normalize';
 import type { SeedInput } from '../../../common/seed/seeds';
-import { lightShapeFrom, mixInto, shapeVariants, sphereTiltFor, type LightShape } from '../../shared/atmosphere';
+import { lightShapeFrom, sphereTiltFor, type LightShape } from '../../shared/atmosphere';
 import { newRgb, srgbToLinear, type Rgb3 } from '../../shared/color';
 import { renderMosaic, type MosaicParams } from '../mosaic/mosaic';
 import type { PhotoObject } from '../../shared/object';
@@ -43,18 +43,9 @@ function withShape(p9: SpaceComposition, shape: LightShape): SpaceComposition {
   return { ...p9, shape, backgrounds: { ...p9.backgrounds, sphere: sphereTiltFor(p9.backgrounds.sphere, shape) } };
 }
 
-/**
- * The Phase 9 picture of the theme world, in linear colour (the ground the theme is laid on). 光の形 at `shape` (019
- * FR-1907): absent or at the drawn end, as drawn; between, the round and the straight ground mixed. The foreground
- * chosen for the drawn shape stays (FR-1909).
- */
-export function themeBase(t: ThemeParams, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number, shape?: number): Rgb3 {
-  const v = shapeVariants(t.shape);
-  if (shape === undefined || shape === v.drawn) return groundOf(t.p9, t.foreground, img, features, W, H, quality);
-  if (shape <= 0 || shape >= 1) return groundOf(withShape(t.p9, shape <= 0 ? v.ring : v.straight), t.foreground, img, features, W, H, quality);
-  const out = groundOf(withShape(t.p9, v.ring), t.foreground, img, features, W, H, quality);
-  mixInto(out, groundOf(withShape(t.p9, v.straight), t.foreground, img, features, W, H, quality), shape);
-  return out;
+/** The Phase 9 picture of the theme world, in linear colour (the ground the theme is laid on). */
+export function themeBase(t: ThemeParams, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number): Rgb3 {
+  return groundOf(t.p9, t.foreground, img, features, W, H, quality);
 }
 
 function groundOf(p9: SpaceComposition, foreground: ForegroundAlgo, img: RgbImage, features: ImageFeatures, W: number, H: number, quality: number): Rgb3 {
@@ -79,5 +70,5 @@ export function renderTheme(
   H: number,
   quality: number,
 ): { rgba: Uint8ClampedArray; objects: Float32Array } {
-  return renderMosaic(mosaic, range, img, c, W, H, themeBase(t, img, features, W, H, quality, c.lightShape));
+  return renderMosaic(mosaic, range, img, c, W, H, themeBase(t, img, features, W, H, quality));
 }

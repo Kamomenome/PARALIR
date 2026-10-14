@@ -14,20 +14,21 @@ describe('ひとつ戻す undoes the last change (013 FR-1308, SC-1306)', () => 
 
   it('a slider: back to the value before; a run of the same slider is one step', async () => {
     const s = await photo();
-    const a = await setSpaceControls(s, { count: 0.6 });
-    const b = await setSpaceControls(a, { count: 0.7 });
-    const c = await setSpaceControls(b, { count: 0.8 });
+    const a = await setSpaceControls(s, { morph: 0.6 });
+    const b = await setSpaceControls(a, { morph: 0.7 });
+    const c = await setSpaceControls(b, { morph: 0.8 });
     const back = await restorePrevious(c);
-    expect(back.spaceControls.count).toBe(s.spaceControls.count);
+    expect(back.spaceControls.morph).toBe(s.spaceControls.morph);
     expect(back.previous).toBeNull();
   });
 
-  it('another slider after one is its own step', async () => {
+  it('another change after the slider is its own step', async () => {
     const s = await photo();
-    const a = await setSpaceControls(s, { count: 0.9 });
-    const b = await setSpaceControls(a, { size: 0.1 });
+    const a = setSpaceControls(s, { morph: 0.9 });
+    const b = setSpaceType(a, 'mosaic');
     const back = await restorePrevious(b);
-    expect(back.spaceControls).toEqual({ ...s.spaceControls, count: 0.9 });
+    expect(back.spaceControls).toEqual({ morph: 0.9 });
+    expect(back.spaceType).toBe(s.spaceType);
   });
 
   it('the world fixed on screen and the lasso', async () => {

@@ -23,7 +23,7 @@ describe('space-v2 state (003 US2)', () => {
     const s = await spaceState();
     const t = setSpaceType(s, 'copies');
     expect(t.spaceWorld).toBe(s.spaceWorld);
-    const u = setSpaceControls(t, { lightShape: 0.4, size: 0.2, count: 0.8 });
+    const u = setSpaceControls(t, { morph: 0.8 });
     expect(u.spaceWorld).toBe(s.spaceWorld);
     expect(u.spaceSeeds).toBe(s.spaceSeeds);
   });

@@ -9,6 +9,7 @@ import { buildAtmosphere, renderAtmosphere, type Atmosphere } from './shared/atm
 import { finish } from './shared/backdrop';
 import { Hdr } from './shared/hdr';
 import { mainObject, mosaicObject, rangeObject } from './shared/object';
+import { spreadOver } from './shared/spread';
 import { drawsFrom } from './draws';
 import type { SpaceSeeds } from './seeds';
 import { FIXED_LOOK, type SpaceControls } from './types';
@@ -37,6 +38,8 @@ export type SpaceWorld = {
   hasSubject: boolean;
   /** The background: the 002 Phase 9 background (light field, celestial sphere or nested photo; FR-314). */
   atmosphere: Atmosphere;
+  /** The seed of where the world spreads over the photo below 変貌 0.5 (021 FR-2102). */
+  morphSeed: number;
 } & WorldParams;
 
 export interface WorldRender {
@@ -69,7 +72,7 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
   const e = effectiveFeatures(features, FIXED_LOOK.featureInfluence);
   const s = seeds.streams;
   const hasSubject = mainObject(img, features, parts).subject;
-  const [t, cam] = await Promise.all([drawsFrom(s.type, 'type/main', 2), drawsFrom(s.camera, 'camera/main', 2)]);
+  const [t, cam, [m]] = await Promise.all([drawsFrom(s.type, 'type/main', 2), drawsFrom(s.camera, 'camera/main', 2), drawsFrom(s.type, 'morph/seed', 1)]);
   const fov = ((58 + 14 * cam[0]) * Math.PI) / 180;
   const ctx: ComposeContext = { seeds, features, img, fov };
   // Each world draws from its own stream, so building them together never changes their values.
@@ -81,6 +84,7 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
     camera: { fov, roll: (cam[1] - 0.5) * 0.3 },
     hasSubject,
     atmosphere,
+    morphSeed: Math.floor(m * 2 ** 31),
     ...(Object.fromEntries(WORLDS.map((w, i) => [w.type, params[i]])) as WorldParams),
   };
 }
@@ -94,7 +98,7 @@ export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeature
   if (!def) throw new Error(`unknown world ${type}`);
   // The lasso's range is the subject in every way when there is one (013B FR-1309).
   const obj = (range && rangeObject(img, range)) || mainObject(img, features, parts);
-  return def.render({
+  const out = def.render({
     world: w,
     img,
     features,
@@ -108,6 +112,8 @@ export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeature
     // by the AI's candidates (004 FR-407, FR-411).
     ranged: () => (range && rangeObject(img, range)) || mosaicObject(img, features, parts),
   });
+  // Below 0.5 the world spreads over the photo, the rest first and the subject after (021 FR-2102); 0.5 as drawn.
+  return c.morph >= 0.5 ? out : { rgba: spreadOver(out.rgba, w.morphSeed, obj, img, W, H, c.morph / 0.5), objects: out.objects };
 }
 
 /** The background alone, finished like a world (for tests and comparisons). */

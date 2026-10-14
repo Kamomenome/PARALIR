@@ -107,7 +107,7 @@ test('画面の部品は無彩色、控えめな文字も読める（007 SC-705�
     const [r, g, b] = rgb(c);
     return r === g && g === b;
   };
-  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['restore-previous', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-size', 'accent-color']] as const) {
+  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['restore-previous', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-morph', 'accent-color']] as const) {
     const c = await css(page, id, prop);
     expect(grey(c), `${id} ${prop} ${c}`).toBe(true);
   }
@@ -125,7 +125,7 @@ test('手応え: バーは描いている間だけ、絵の上は十字、キャ
 
 test('キーボード: Ctrl+Z でひとつ戻す、選択枠が見える（007 SC-707, 013）', async ({ page }) => {
   await withPhoto(page);
-  const slider = page.getByTestId('space-control-size');
+  const slider = page.getByTestId('space-control-morph');
   await slider.evaluate((el: HTMLInputElement) => {
     el.value = '0.9';
     el.dispatchEvent(new Event('input', { bubbles: true }));

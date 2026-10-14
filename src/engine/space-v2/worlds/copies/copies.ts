@@ -3,7 +3,7 @@ import type { Camera } from '../../shared/camera';
 import { limbOf, type PhotoObject } from '../../shared/object';
 import { newLayer, renderPlates, type Layer, type Plate } from '../../shared/plates';
 import { drawsFrom } from '../../draws';
-import type { SpaceControls, Vec3 } from '../../types';
+import { FIXED_LOOK, chaosOf, type SpaceControls, type Vec3 } from '../../types';
 
 /**
  * World ① Rigid copies (FR-302): the photo's main object, never bent, repeated by one simple rule — a
@@ -41,6 +41,8 @@ export interface CopiesParams {
   jitter: number[];
   limbSide: number;
   limbShare: number;
+  /** For 変貌 beyond 0.5 (021 FR-2103): each copy's own scatter and turn, three values per copy. */
+  scatter: number[];
 }
 
 const MAX = 24;
@@ -49,11 +51,12 @@ export async function buildCopies(stream: Uint8Array, fov: number): Promise<Copi
   const t = Math.tan(fov / 2);
   const d = await drawsFrom(stream, 'copies/main', 16);
   const jit = await drawsFrom(stream, 'copies/jitter', MAX);
+  const scatter = await drawsFrom(stream, 'copies/scatter', 3 * MAX);
   const kind = COPIES_KINDS[Math.min(4, Math.floor(d[0] * 5))];
   const jitter = jit.map((v) => (d[1] < 0.5 ? 0 : (v - 0.5) * 0.2));
   const base: CopiesParams = {
     kind, count: 0, centre: [0, 0, 4], reach: 0, objectSize: 0, tiltX: 0, tiltY: 0, phase: 0, radial: false,
-    span: 0, start: 0, step: [0, 0, 0], turn: 0, rows: 0, cols: 0, ratio: 1, jitter, limbSide: 1, limbShare: 0.35,
+    span: 0, start: 0, step: [0, 0, 0], turn: 0, rows: 0, cols: 0, ratio: 1, jitter, limbSide: 1, limbShare: 0.35, scatter,
   };
   if (kind === 'ring') {
     const z = 5 + 2 * d[2];
@@ -105,8 +108,12 @@ export interface CopyInstance {
   size: number;
 }
 
-/** Every placed copy (and the fan's body), scaled by the size slider factor. */
-export function copyInstances(p: CopiesParams, sizeK = 1): CopyInstance[] {
+/**
+ * Every placed copy (and the fan's body), scaled by `sizeK`. `chaos` (変貌 beyond 0.5, 021 FR-2103): more copies, each
+ * thrown off its place and turned by its own scatter; 0 is the regular array.
+ */
+export function copyInstances(q: CopiesParams, sizeK = 1, chaos = 0): CopyInstance[] {
+  const p = chaos > 0 && q.kind !== 'grid' ? { ...q, count: Math.min(MAX, q.count + Math.round(12 * chaos)) } : q;
   const out: CopyInstance[] = [];
   const C = p.centre;
   const s = p.objectSize * sizeK;
@@ -156,13 +163,26 @@ export function copyInstances(p: CopiesParams, sizeK = 1): CopyInstance[] {
       out.push({ role: 'copy', index: k, centre: [C[0] + r * radialV[0], C[1] + r * radialV[1], C[2] + p.step[2] * k], right: p.radial ? tangent : [-radialV[0], -radialV[1], 0], up: p.radial ? radialV : tangent, size: s });
     }
   }
-  return out;
+  return chaos > 0 ? out.map((c, n) => scattered(c, p, n, chaos)) : out;
+}
+
+/** A copy thrown off its place (up to two of its sizes, and in depth) and turned (up to 2.5 rad) by its own scatter. */
+function scattered(c: CopyInstance, p: CopiesParams, n: number, chaos: number): CopyInstance {
+  const [a, b, d] = [0, 1, 2].map((j) => 2 * (p.scatter[(3 * n + j) % p.scatter.length] - 0.5));
+  const turn = 2.5 * chaos * a;
+  const reach = 2 * chaos * c.size;
+  return {
+    ...c,
+    centre: [c.centre[0] + reach * b, c.centre[1] + reach * d, c.centre[2] + 0.5 * reach * a],
+    right: mix(c.right, c.up, Math.cos(turn), Math.sin(turn)),
+    up: mix(c.up, c.right, Math.cos(turn), -Math.sin(turn)),
+  };
 }
 
 /** The copies as a layer of photo plates (linear colour, coverage, depth). */
 export function copiesLayer(p: CopiesParams, obj: PhotoObject, img: RgbImage, cam: Camera, c: SpaceControls, W: number, H: number): Layer {
   const limb = p.kind === 'fan' ? limbOf(obj, img, p.limbSide, p.limbShare) : null;
-  const plates: Plate[] = copyInstances(p, 0.7 + 0.6 * c.size).map((i) => {
+  const plates: Plate[] = copyInstances(p, 0.7 + 0.6 * FIXED_LOOK.size, chaosOf(c)).map((i) => {
     const part = i.role === 'copy' && limb ? limb : obj;
     return { crop: part.crop, centre: i.centre, size: i.size, right: i.right, up: i.up, mask: part.mask, edge: [0, 0, 0] };
   });

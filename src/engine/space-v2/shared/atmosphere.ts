@@ -148,31 +148,9 @@ export function lightShapeFrom(sh: number[]): LightShape {
   };
 }
 
-/**
- * 光の形 (019 FR-1909): the round and the straight light of a work, both from the values drawn from its photo — a band
- * when the drawn light is round (the angle and width the same draws give a band) — and where the drawn one sits (0 / 1).
- */
-export function shapeVariants(shape: LightShape): { ring: LightShape; straight: LightShape; drawn: 0 | 1 } {
-  return shape.kind === 'ring' ? { ring: shape, straight: { ...shape, kind: 'band' }, drawn: 0 } : { ring: { ...shape, kind: 'ring' }, straight: shape, drawn: 1 };
-}
-
 /** Only round light looks into the sphere's pole (a radial tunnel); the other shapes see its horizon (003). */
 export function sphereTiltFor<T extends { tilt: number }>(sphere: T, shape: LightShape): T {
   return shape.kind !== 'ring' && sphere.tilt === Math.PI / 2 ? { ...sphere, tilt: 0 } : sphere;
-}
-
-/**
- * Two pictures of the same work mixed in linear light (019 FR-1907): `t` of `b` into `a`, kept in `a`. The round and
- * the straight light are drawn whole and mixed, so either end is the picture of that shape as it is.
- */
-export function mixInto(a: { r: Float32Array; g: Float32Array; b: Float32Array }, b: { r: Float32Array; g: Float32Array; b: Float32Array }, t: number): void {
-  for (const [x, y] of [
-    [a.r, b.r],
-    [a.g, b.g],
-    [a.b, b.b],
-  ] as const) {
-    for (let i = 0; i < x.length; i++) x[i] += (y[i] - x[i]) * t;
-  }
 }
 
 /**
@@ -522,23 +500,6 @@ export function renderAtmosphere(hdr: Hdr, a: Atmosphere, img: RgbImage, c: { gl
     hdr.g[i] *= vm[i];
     hdr.b[i] *= vm[i];
   }
-  return light;
-}
-
-/**
- * The background with 光の形 at `t` (019 FR-1907): absent, or at the drawn shape's end, the background as it was drawn;
- * at the other end the other shape; between, both drawn and mixed in linear light.
- */
-export function renderShapedAtmosphere(hdr: Hdr, a: Atmosphere, img: RgbImage, c: { glow: number; fog: number }, quality: number, t: number | undefined): PixelMap {
-  const v = shapeVariants(a.shape);
-  if (t === undefined || t === v.drawn) return renderAtmosphere(hdr, a, img, c, quality);
-  const as = (shape: LightShape): Atmosphere => ({ ...a, shape, env: { ...a.env, sphere: sphereTiltFor(a.env.sphere, shape) } });
-  if (t <= 0 || t >= 1) return renderAtmosphere(hdr, as(t <= 0 ? v.ring : v.straight), img, c, quality);
-  const light = renderAtmosphere(hdr, as(v.ring), img, c, quality);
-  const other = new Hdr(hdr.W, hdr.H);
-  const straightLight = renderAtmosphere(other, as(v.straight), img, c, quality);
-  mixInto(hdr, other, t);
-  mixInto(light, straightLight, t);
   return light;
 }
 

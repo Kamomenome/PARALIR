@@ -1,6 +1,6 @@
-// Slider comparison for 019 (FR-1912): each mode of each photo, every slider the mode shows at 0, 0.5 and 1 (the others
-// as they start), drawn by the app itself in a headless browser with its on-device AI. Nothing leaves the device.
-// Usage: npx tsx tools/slider-sheet.ts photo.jpg [photo2.jpg ...] --out out/019 [--modes mosaic,theme]
+// Slider comparison (019 FR-1912, 021 FR-2107): each mode of each photo, 変貌 at 0, 0.25, 0.5, 0.75 and 1, drawn by the
+// app itself in a headless browser with its on-device AI. Nothing leaves the device.
+// Usage: npx tsx tools/slider-sheet.ts photo.jpg [photo2.jpg ...] --out out/021 [--modes mosaic,theme]
 // Writes <out>/<photo>/<mode>-<slider>-<value>.png and <out>/index.html to look at them side by side.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
@@ -15,8 +15,10 @@ const modesAt = args.indexOf('--modes');
 const modes = modesAt >= 0 ? args[modesAt + 1].split(',') : null;
 const photos = args.filter((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1) && (modesAt < 0 || i !== modesAt + 1));
 const worlds = WORLDS.filter((w) => !modes || modes.includes(w.type));
-const VALUES = [0, 0.5, 1];
-const NAMES: Record<string, string> = { light: '光の強さ', lightShape: '光の形', darkness: '背景の暗さ', size: '主役の大きさ', count: '長方形の数' };
+const VALUES = [0, 0.25, 0.5, 0.75, 1];
+const NAMES: Record<string, string> = { morph: '変貌' };
+/** The sliders on screen (021 FR-2101: 変貌 only). */
+const KEYS = ['morph'];
 const PORT = 5197;
 const BASE = `http://localhost:${PORT}`;
 
@@ -59,7 +61,7 @@ try {
     mkdirSync(join(out, name), { recursive: true });
     for (const w of worlds) {
       const t0 = Date.now();
-      // A fresh work for each mode, so every slider starts where the mode starts it (光の形: the drawn shape).
+      // A fresh work for each mode, so every slider starts where it starts.
       await page.clock.setFixedTime(new Date('2026-10-13T03:00:00Z'));
       await page.goto(BASE);
       await page.setInputFiles('[data-testid="file-input"]', file);
@@ -72,7 +74,7 @@ try {
       }
       await page.getByTestId('space-world').selectOption(w.type);
       await done(page);
-      for (const key of w.controls) {
+      for (const key of KEYS) {
         const slider = page.getByTestId(`space-control-${key}`);
         const start = await slider.inputValue();
         const files: string[] = [];
@@ -99,12 +101,11 @@ const sections = worlds.map((w) => {
   const mine = rows.filter((r) => r.mode === w.type);
   if (!mine.length) return '';
   const sliders = [...new Set(mine.map((r) => r.key))].map((key) => {
-    const end = (v: number) => (key === 'lightShape' ? (v === 0 ? '0（輪）' : v === 1 ? '1（まっすぐ）' : String(v)) : String(v));
     const body = mine
       .filter((r) => r.key === key)
       .map((r) => `<tr><th>${esc(r.photo)}<br><small>最初 ${esc(r.start)}</small></th>${r.files.map((f) => `<td><img src="${esc(f)}" loading="lazy"></td>`).join('')}</tr>`)
       .join('');
-    return `<h3>${esc(NAMES[key] ?? key)}</h3><table><tr><th></th>${VALUES.map((v) => `<th>${end(v)}</th>`).join('')}</tr>${body}</table>`;
+    return `<h3>${esc(NAMES[key] ?? key)}</h3><table><tr><th></th>${VALUES.map((v) => `<th>${v}</th>`).join('')}</tr>${body}</table>`;
   });
   return `<section><h2>${esc(w.label)}</h2><p>${esc(w.note)}</p>${sliders.join('')}</section>`;
 });

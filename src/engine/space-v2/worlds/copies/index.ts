@@ -8,8 +8,6 @@ export const copies: WorldDef<'copies', CopiesParams> = {
   label: '物の複製',
   note: '主役を環・扇・列・格子・螺旋に並べる',
   version: 'copies-v5',
-  controls: ['lightShape', 'size'],
-  shapeOf: (w) => w.atmosphere.shape,
   usesRange: true,
   odds: () => 1.0,
   build: (x) => buildCopies(x.seeds.streams.copies, x.fov),

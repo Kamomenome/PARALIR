@@ -51,11 +51,11 @@ describe('長方形の数 from few large to many small (019 FR-1916, SC-1908)', 
     expect(many).toBeGreaterThanOrEqual(4 * few);
   });
 
-  it('the rectangles world draws differently at 0 and 1 from 0.5 (its version raised)', async () => {
+  it('the rectangles world draws differently beyond 0.5 of 変貌, where the count follows it (021 FR-2103)', async () => {
     const src = await prepareSource(1, { name: 'scene.png', img, fileSha256: 'c'.repeat(64) as any, fileBytes: 1, hadTransparency: false });
     const s = await withSource(createInitialState(Date.UTC(2026, 9, 11, 3), 'Asia/Tokyo'), src);
-    const draw = (count: number) => renderWorld(s.spaceWorld as SpaceWorld, img, src.features, { ...s.spaceControls, count }, 160, 120, 'mosaic').rgba.join(',');
-    expect(draw(0)).not.toBe(draw(0.5));
+    const draw = (morph: number) => renderWorld(s.spaceWorld as SpaceWorld, img, src.features, { morph }, 160, 120, 'mosaic').rgba.join(',');
+    expect(draw(1)).not.toBe(draw(0.5));
     expect((s.spaceWorld as SpaceWorld).algorithms).toMatchObject({ mosaic: 'mosaic-v4', theme: 'theme-v3' });
   });
 });

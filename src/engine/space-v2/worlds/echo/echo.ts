@@ -6,7 +6,7 @@ import { cropMask, type PhotoObject } from '../../shared/object';
 import type { Mask } from '../../shared/plates';
 import { mipSampler } from '../../shared/photo';
 import { drawsFrom } from '../../draws';
-import type { SpaceControls } from '../../types';
+import { FIXED_LOOK, chaosOf, type SpaceControls } from '../../types';
 
 /**
  * World ⑦ The subject filled with itself (003 FR-318; reference: a figure whose outline is filled with rows
@@ -101,7 +101,11 @@ export function echoLayout(
   H: number,
   sizeK = 1,
   parts: PhotoParts | null = null,
+  chaos = 0,
 ): { copies: EchoCopy[]; region: Float32Array; sprites: EchoSprite[] } {
+  // 変貌 beyond 0.5 (021 FR-2103): more copies, the spirals turning faster; 0 as drawn.
+  const want = Math.round(12 * (1 + 2 * chaos));
+  const turnK = 1 + 2 * chaos;
   const region = regionMask(obj, img, W, H);
   const box = regionBox(region, W, H) ?? [W * 0.3, H * 0.3, W * 0.7, H * 0.7];
   const bh = Math.max(box[3] - box[1], box[2] - box[0]);
@@ -151,7 +155,7 @@ export function echoLayout(
       const q = p.ratio ** k;
       if (s0 * q < 2) break;
       const a = a0 + k * p.turn;
-      all.push({ strand, kind: 'spiral', k, cx: qx + r0 * q * Math.cos(a), cy: qy + r0 * q * Math.sin(a), size: s0 * q, angle: k * p.turn, sprite: 0 });
+      all.push({ strand, kind: 'spiral', k, cx: qx + r0 * q * Math.cos(a), cy: qy + r0 * q * Math.sin(a), size: s0 * q, angle: k * p.turn * turnK, sprite: 0 });
     }
     // From the innermost copy outwards, as long as the centres stay inside (one unbroken run).
     let first = all.length;
@@ -174,9 +178,9 @@ export function echoLayout(
     }
     return n === 0 ? 1 : hit / n;
   };
-  for (let k = 0; k < 10 && covered() < 0.8; k++) row();
+  for (let k = 0; k < 10 * (1 + chaos) && covered() < 0.8 + 0.15 * chaos; k++) row();
   // Enough copies (more rows if a small outline cut them short).
-  for (let k = 0; k < 12 && (copies.length < 12 || !copies.some((c) => c.kind === 'spiral') || !copies.some((c) => c.kind === 'row')); k++) {
+  for (let k = 0; k < want && (copies.length < want || !copies.some((c) => c.kind === 'spiral') || !copies.some((c) => c.kind === 'row')); k++) {
     if (!copies.some((c) => c.kind === 'spiral')) spiral();
     else row();
   }
@@ -199,7 +203,7 @@ export function echoLayout(
 }
 
 export function renderEcho(p: EchoParams, obj: PhotoObject, img: RgbImage, c: SpaceControls, W: number, H: number, parts: PhotoParts | null = null): { rgba: Uint8ClampedArray; objects: Float32Array } {
-  const { copies, region, sprites } = echoLayout(p, obj, img, W, H, 0.75 + 0.5 * c.size, parts);
+  const { copies, region, sprites } = echoLayout(p, obj, img, W, H, 0.75 + 0.5 * FIXED_LOOK.size, parts, chaosOf(c));
   const out = framePhoto(img, W, H);
   const objects = new Float32Array(W * H);
   const aspect = img.width / img.height;

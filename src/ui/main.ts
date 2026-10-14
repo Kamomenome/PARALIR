@@ -5,7 +5,6 @@ import { blockExternalRequests } from '../app/offline';
 import { createInitialState, firstLook, restorePrevious, showPhoto, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
 import { chooseWorkers, createInlineWorker } from '../app/workers';
 import { systemTimeZone } from '../engine/common/time/snapshot';
-import type { SpaceWorld } from '../engine/space-v2/world';
 import { buildAbout } from './about';
 import { createBusy } from './busy';
 import type { AppContext } from './context';
@@ -94,7 +93,7 @@ function refreshPanel() {
   tech.show(state);
   overlay.draw(state);
   controls.show(state.previous !== null, state.source !== null, state.showing);
-  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true, state.spaceWorld as SpaceWorld | null);
+  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true);
   spacePanel.showParts(state.source ? state.spaceParts : null);
   spacePanel.showLasso(state.spaceRange, state.showing);
   lasso.draw(state);

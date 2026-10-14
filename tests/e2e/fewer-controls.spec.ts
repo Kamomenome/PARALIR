@@ -13,10 +13,6 @@ test('レシピはなく、写真に合わせる強さ・光の強さ・背景�
   const shown = async () => (await page.locator('[data-testid^="space-control-"]').evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent).map((e) => e.getAttribute('data-testid')!.slice('space-control-'.length))));
   for (const gone of ['featureInfluence', 'light', 'darkness']) await expect(page.getByTestId(`space-control-${gone}`)).toHaveCount(0);
   for (const name of ['写真に合わせる強さ', '光の強さ', '背景の暗さ']) await expect(page.getByTestId('panel')).not.toContainText(name);
-  await page.getByTestId('space-world').selectOption('copies');
-  await waitForPreview(page);
-  expect(await shown()).toEqual(['lightShape', 'size']);
-  await page.getByTestId('space-world').selectOption('mosaic');
-  await waitForPreview(page);
-  expect(await shown()).toEqual(['count']);
+  // The one left since 021 (FR-2101).
+  expect(await shown()).toEqual(['morph']);
 });

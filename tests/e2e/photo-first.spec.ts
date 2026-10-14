@@ -39,7 +39,7 @@ test('「反映」で絵になる。スライダーでも絵になる（011 SC-1
   await expect(page.getByTestId('export')).toBeEnabled();
   // A slider on a fresh photo shows the world too.
   await withPhoto(page);
-  await page.getByTestId('space-control-size').evaluate((el: HTMLInputElement) => {
+  await page.getByTestId('space-control-morph').evaluate((el: HTMLInputElement) => {
     el.value = '0.8';
     el.dispatchEvent(new Event('input', { bubbles: true }));
   });

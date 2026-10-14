@@ -1,21 +1,11 @@
 import type { ThemeRange } from '../engine/common/parts/lasso';
 import type { PartsResult } from '../app/state';
 import type { SpaceControls } from '../engine/space-v2/types';
-import type { SpaceWorld } from '../engine/space-v2/world';
 import { WORLDS, worldOf } from '../engine/space-v2/worlds';
 import { h } from './layout';
 
-/**
- * The sliders under 背景・主役 (017 FR-1709), with plain names (FR-1704). 光の形 since 019 (FR-1907); 写真に合わせる強さ,
- * 光の強さ and 背景の暗さ went in 020 (FR-2003).
- */
-const GROUPS: [string, [keyof SpaceControls, string][]][] = [
-  ['背景', [['lightShape', '光の形']]],
-  ['主役', [['size', '主役の大きさ'], ['count', '長方形の数']]],
-];
-
-/** A slider's value as shown; 光の形 names its ends. */
-const shownValue = (key: keyof SpaceControls, v: number) => (key === 'lightShape' && v <= 0 ? '輪' : key === 'lightShape' && v >= 1 ? 'まっすぐ' : v.toFixed(2));
+/** The one slider (021 FR-2101): 変貌. */
+const SLIDERS: [keyof SpaceControls, string][] = [['morph', '変貌']];
 
 /** The world select's names and notes come from the engine's registry (009 FR-902). */
 const TYPES: [string, string, string][] = WORLDS.map((w) => [w.type, w.label, w.note]);
@@ -26,8 +16,8 @@ export interface SpacePanel {
   captionItems: HTMLElement[];
   /** What the AI saw, in 技術的な表示 (016 FR-1604). */
   partsLine: HTMLElement;
-  /** `seeded` is the seed's own choice; the split world needs a subject. 光の形 starts at the world's drawn shape (019 FR-1908). */
-  show(c: SpaceControls, type: string, visible: boolean, seeded: string | null, hasSubject: boolean, world?: SpaceWorld | null): void;
+  /** `seeded` is the seed's own choice; the split world needs a subject. */
+  show(c: SpaceControls, type: string, visible: boolean, seeded: string | null, hasSubject: boolean): void;
   onSlider(fn: (patch: Partial<SpaceControls>) => void): void;
   onType(fn: (t: string) => void): void;
   /** What the AI saw in the photo (004); null while it is still looking. */
@@ -57,28 +47,22 @@ function partsLine(p: PartsResult | null): { state: string; text: string; digest
   return { state: q.person ? 'person' : q.object ? 'object' : 'none', text: `${text}（${p.ms} ms）`, digest: q.digest };
 }
 
-/** Spatial-mode controls (spec 003): the world (おまかせ or fixed), the actions under it and five sliders that keep the seed. */
+/** Spatial-mode controls (spec 003): the mode, the actions under it and the one slider, 変貌 (021 FR-2101), that keeps the seed. */
 export function buildSpacePanel(actions: HTMLElement): SpacePanel {
   // No おまかせ (013B FR-1311): the modes only; the first photo comes with the drawn one selected.
   const select = h('select', { 'data-testid': 'space-world', id: 'space-world' }, ...TYPES.map(([v, l]) => h('option', { value: v }, l)));
   const note = h('p', { class: 'muted', 'data-testid': 'world-note' });
   const sliders = new Map<keyof SpaceControls, { input: HTMLInputElement; out: HTMLOutputElement }>();
   const fns: ((p: Partial<SpaceControls>) => void)[] = [];
-  const rowsOf = new Map<keyof SpaceControls, HTMLElement>();
-  const groups = GROUPS.map(([title, keys]) => {
-    const rows = keys.map(([key, label]) => {
-      const input = h('input', { type: 'range', min: '0', max: '1', step: '0.01', 'data-testid': `space-control-${key}` });
-      const out = h('output', {});
-      input.addEventListener('input', () => {
-        out.textContent = shownValue(key, Number(input.value));
-        fns.forEach((f) => f({ [key]: Number(input.value) }));
-      });
-      sliders.set(key, { input, out });
-      const row = h('label', { class: 'slider' }, label, out, input);
-      rowsOf.set(key, row);
-      return row;
+  const rows = SLIDERS.map(([key, label]) => {
+    const input = h('input', { type: 'range', min: '0', max: '1', step: '0.01', 'data-testid': `space-control-${key}` });
+    const out = h('output', {});
+    input.addEventListener('input', () => {
+      out.textContent = Number(input.value).toFixed(2);
+      fns.forEach((f) => f({ [key]: Number(input.value) }));
     });
-    return { keys: keys.map(([k]) => k), el: h('div', { class: 'slider-group', 'data-testid': 'slider-group' }, h('div', { class: 'group-title' }, title), ...rows) };
+    sliders.set(key, { input, out });
+    return h('label', { class: 'slider' }, label, out, input);
   });
   const parts = h('span', { class: 'note', 'data-testid': 'parts-status', 'data-state': 'pending' });
   const lassoText = h('span', { class: 'note', 'data-testid': 'lasso-status', 'data-source': 'none' }, LASSO_HINT.photo);
@@ -97,7 +81,7 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
     { 'data-testid': 'space-panel' },
     h('div', { class: 'group world' }, h('label', { class: 'muted', for: 'space-world' }, 'モード'), select, note),
     h('div', { class: 'group' }, actions),
-    h('div', { class: 'group sliders' }, ...groups.map((g) => g.el)),
+    h('div', { class: 'group sliders' }, ...rows),
   );
   root.hidden = true;
   const typeFns: ((t: string) => void)[] = [];
@@ -107,18 +91,14 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
     captionItems: [lassoText, lassoOutline, lassoClear],
     partsLine: parts,
     lassoWorks: () => lassoUsed,
-    show(c, type, visible, seeded, hasSubject, world = null) {
+    show(c, type, visible, seeded, hasSubject) {
       root.hidden = !visible;
       // Before any photo (or while it settles) the seed's mode, if any, is the one shown.
       const shownType = type === 'auto' ? (seeded ?? TYPES[0][0]) : type;
       const chosen = TYPES.find(([v]) => v === shownType);
       note.textContent = chosen ? chosen[2] : '';
       select.value = shownType;
-      // Only the sliders that change this template (017 FR-1704), under their headings (FR-1709).
       const def = worldOf(type === 'auto' ? (seeded ?? '') : type);
-      const works = (k: keyof SpaceControls) => !def || (def.controls as readonly string[]).includes(k);
-      for (const [key, row] of rowsOf) row.hidden = !works(key);
-      for (const g of groups) g.el.hidden = !g.keys.some(works);
       // The lasso works only where its range is used (FR-1706).
       lassoUsed = !def || !!def.usesRange;
       lassoText.hidden = !lassoUsed;
@@ -129,12 +109,9 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
         const option = [...select.options].find((o) => o.value === w.type);
         if (option) option.disabled = !!w.needsSubject && !hasSubject;
       }
-      // 光の形 starts at the shape drawn from the photo until it is moved (019 FR-1908).
-      const drawn = world && def?.shapeOf ? (def.shapeOf(world).kind === 'ring' ? 0 : 1) : 0;
       for (const [key, { input, out }] of sliders) {
-        const v = c[key] ?? drawn;
-        input.value = String(v);
-        out.textContent = shownValue(key, v);
+        input.value = String(c[key]);
+        out.textContent = c[key].toFixed(2);
       }
     },
     onSlider: (f) => fns.push(f),

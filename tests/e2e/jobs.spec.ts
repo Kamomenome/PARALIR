@@ -23,27 +23,27 @@ async function setSlider(page: Page, key: string, value: number) {
 test('連続操作では最後の値の結果だけが表示される（R12）', async ({ page }) => {
   test.setTimeout(180_000);
   await openWithFixedTime(page);
-  for (let i = 0; i <= 10; i++) await setSlider(page, 'size', i / 10);
-  await setSlider(page, 'size', 0.37);
+  for (let i = 0; i <= 10; i++) await setSlider(page, 'morph', i / 10);
+  await setSlider(page, 'morph', 0.37);
   await waitForPreview(page);
   await page.waitForTimeout(500);
   await waitForPreview(page);
   const rapid = await previewHash(page);
 
   await openWithFixedTime(page);
-  await setSlider(page, 'size', 0.37);
+  await setSlider(page, 'morph', 0.37);
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(rapid);
 });
 
 test('描画が失敗しても設定は残り、次の操作で描画できる（R12）', async ({ page }) => {
   await openWithFixedTime(page);
-  await setSlider(page, 'size', 0.3);
+  await setSlider(page, 'morph', 0.3);
   await waitForPreview(page);
   await page.evaluate(() => ((window as any).__paralirInjectFailure = true));
-  await setSlider(page, 'size', 0.6);
+  await setSlider(page, 'morph', 0.6);
   await expect(page.getByTestId('errors')).toContainText('描画に失敗しました');
-  await expect(page.getByTestId('space-control-size')).toHaveValue('0.6');
-  await setSlider(page, 'size', 0.65);
+  await expect(page.getByTestId('space-control-morph')).toHaveValue('0.6');
+  await setSlider(page, 'morph', 0.65);
   await waitForPreview(page);
 });

@@ -59,25 +59,3 @@ test('囲みは元の写真の上で描き、「反映」で変える。変換�
   await expect(preview).toHaveAttribute('data-showing', 'photo');
   await expect(lines(page)).toHaveCount(0);
 });
-
-test('「光の形」は物の複製・主題で出て、最初は写真から決まった形。写真に合わせる強さは出ない（019 SC-1904）', async ({ page }) => {
-  await withPhoto(page);
-  const shape = page.getByTestId('space-control-lightShape');
-  await page.getByTestId('space-world').selectOption('copies');
-  await waitForPreview(page);
-  await expect(page.getByTestId('panel')).toContainText('光の形');
-  await expect(shape).toBeVisible();
-  expect(['0', '1']).toContain(await shape.inputValue());
-  const before = await previewHash(page);
-  await shape.fill(String(1 - Number(await shape.inputValue())));
-  await waitForPreview(page);
-  expect(await previewHash(page)).not.toBe(before);
-  await page.getByTestId('space-world').selectOption('theme');
-  await waitForPreview(page);
-  await expect(shape).toBeVisible();
-  await page.getByTestId('space-world').selectOption('mosaic');
-  await waitForPreview(page);
-  await expect(shape).toBeHidden();
-  await expect(page.getByTestId('panel')).not.toContainText('写真に合わせる強さ');
-  await expect(page.getByTestId('space-control-featureInfluence')).toHaveCount(0);
-});

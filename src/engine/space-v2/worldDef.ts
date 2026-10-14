@@ -1,7 +1,6 @@
 import type { ImageFeatures } from '../common/analysis/features';
 import type { RgbImage } from '../common/image/normalize';
 import type { PhotoParts } from '../common/parts/types';
-import type { LightShape } from './shared/atmosphere';
 import type { PhotoObject } from './shared/object';
 import type { SpaceSeeds } from './seeds';
 import type { SpaceControls } from './types';
@@ -41,10 +40,6 @@ export interface WorldDef<T extends string = string, P = unknown> {
   readonly note: string;
   /** Raise it whenever the world's output changes (and record the pixels again). */
   readonly version: string;
-  /** The sliders that change this world (017 FR-1704). */
-  readonly controls: readonly ('lightShape' | 'size' | 'count')[];
-  /** The light's shape drawn for the work, where 光の形 is a control (019 FR-1908): the slider starts there. */
-  shapeOf?(world: SpaceWorld): LightShape;
   /** The lasso's range is used (017 FR-1706). */
   readonly usesRange?: boolean;
   /** Only for photos with a subject: never drawn without one, and not offered on screen. */

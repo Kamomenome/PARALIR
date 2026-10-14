@@ -48,7 +48,7 @@ describe('the theme world: the liked Phase 9 picture, with a part of the photo k
         expect(inner / innerN, `v${variation} theme differs`).toBeGreaterThanOrEqual(0.08);
         // A rectangle left in place shows the photo's own pixels there.
         const still = toRgba(framePhoto(w.img, W, H), W, H);
-        const keep = mosaicLayout(w.world.mosaic, obj, w.img, W, H, w.controls.count).tiles.filter((k) => k.kind === 'keep' && !k.drop);
+        const keep = mosaicLayout(w.world.mosaic, obj, w.img, W, H).tiles.filter((k) => k.kind === 'keep' && !k.drop);
         let checked = 0;
         for (const k of keep) {
           const x = Math.round((k.x0 + k.x1) / 2);

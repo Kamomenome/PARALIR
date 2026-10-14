@@ -6,7 +6,7 @@ import { fillHole, holeOf } from './fill';
 import type { PhotoObject } from '../../shared/object';
 import { mipSampler } from '../../shared/photo';
 import { drawsFrom } from '../../draws';
-import type { SpaceControls } from '../../types';
+import { chaosOf, type SpaceControls } from '../../types';
 
 /**
  * World ⑥ The subject rebuilt from rectangles (003 FR-317; reference: a figure whose body is re-cut into
@@ -160,6 +160,22 @@ export function mosaicLayout(p: MosaicParams, obj: PhotoObject, img: RgbImage, W
   return { tiles, region };
 }
 
+/**
+ * The rectangles wilder for 変貌 beyond 0.5 (021 FR-2103): shifted, swapped, magnified and left out more, and the
+ * rectangles themselves thrown further out of place; 0 as drawn.
+ */
+export function wilderMosaic(p: MosaicParams, chaos: number): MosaicParams {
+  if (chaos <= 0) return p;
+  return {
+    ...p,
+    shift: p.shift * (1 + 2 * chaos),
+    jitter: p.jitter * (1 + 4 * chaos),
+    swap: Math.min(0.55, p.swap * (1 + 2 * chaos)),
+    zoom: Math.min(0.25, p.zoom * (1 + 2 * chaos)),
+    drop: Math.min(0.35, p.drop * (1 + 2 * chaos)),
+  };
+}
+
 export function renderMosaic(
   p: MosaicParams,
   obj: PhotoObject,
@@ -169,7 +185,9 @@ export function renderMosaic(
   H: number,
   base: Rgb3 | null = null,
 ): { rgba: Uint8ClampedArray; objects: Float32Array } {
-  const { tiles, region } = mosaicLayout(p, obj, img, W, H, c.count);
+  // 変貌 beyond 0.5 (021 FR-2103): more rectangles (019's reach of the count) and wilder ones.
+  const chaos = chaosOf(c);
+  const { tiles, region } = mosaicLayout(wilderMosaic(p, chaos), obj, img, W, H, 0.5 + 0.5 * chaos);
   // The ground: the photo without the subject, its hole filled with rectangles of the photo (015 FR-1504);
   // in the theme world (005), the Phase 9 picture.
   const cut = obj.source === 'estimate' ? 0.05 : 0.25;

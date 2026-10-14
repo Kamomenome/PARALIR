@@ -26,7 +26,7 @@ test('「別の世界」と「別案」がなく、Space で絵は変わらな�
 });
 
 test('「ひとつ戻す」（Ctrl+Z）で直前の変更が戻る。同じスライダーの続けての変更は 1 手（013 SC-1306）', async ({ page }) => {
-  // A fixed time, and a world 主役の大きさ works in: the picture must change for the test to mean anything.
+  // A fixed time, and 変貌 (021): the picture must change for the test to mean anything.
   await page.clock.setFixedTime(new Date('2026-10-11T03:00:00Z'));
   await page.goto('/?ai=off');
   await page.setInputFiles('[data-testid="file-input"]', `${IMAGES}/scene.png`);
@@ -36,14 +36,14 @@ test('「ひとつ戻す」（Ctrl+Z）で直前の変更が戻る。同じス�
   const start = await previewHash(page);
 
   for (const v of [0.6, 0.7, 0.9]) {
-    await slider(page, 'size', v);
+    await slider(page, 'morph', v);
     await waitForPreview(page);
   }
   expect(await previewHash(page)).not.toBe(start);
   await page.getByTestId('restore-previous').click();
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(start);
-  await expect(page.getByTestId('space-control-size')).toHaveValue('0.5');
+  await expect(page.getByTestId('space-control-morph')).toHaveValue('0.5');
 
   await page.getByTestId('space-world').selectOption('mosaic');
   await waitForPreview(page);

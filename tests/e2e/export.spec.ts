@@ -38,15 +38,15 @@ test('書き出しは開始時の設定で固定され、2400×1800 になる（
     if (u.protocol.startsWith('http') && u.host !== 'localhost:5173') external.push(r.url());
   });
   await open(page);
-  // A mode where 主役の大きさ works.
+  // A mode, and 変貌 moved during the export (021).
   await page.getByTestId('space-world').selectOption('copies');
-  await slider(page, 'size', 0.3);
+  await slider(page, 'morph', 0.3);
   await waitForPreview(page);
 
-  const a = await exportPng(page, () => slider(page, 'size', 0.9));
+  const a = await exportPng(page, () => slider(page, 'morph', 0.9));
   expect([a.width, a.height]).toEqual([2400, 1800]);
 
-  await slider(page, 'size', 0.3);
+  await slider(page, 'morph', 0.3);
   await waitForPreview(page);
   const b = await exportPng(page);
   expect(Buffer.compare(a.data, b.data)).toBe(0);

@@ -10,12 +10,6 @@ async function withPhoto(page: Page) {
   await waitForPreview(page);
 }
 
-const shown = async (page: Page) => {
-  const out: string[] = [];
-  for (const k of ['lightShape', 'size', 'count']) if (await page.getByTestId(`space-control-${k}`).isVisible()) out.push(k);
-  return out;
-};
-
 test('表記: テンプレート・入れ子・スライダーの名前・書き出し。門と闇と光はない（017 SC-1703）', async ({ page }) => {
   await withPhoto(page);
   await expect(page.getByTestId('panel')).toContainText('モード');
@@ -24,35 +18,19 @@ test('表記: テンプレート・入れ子・スライダーの名前・書き
   for (const gone of ['自分で埋める', '門', '闇と光']) expect(options.some((o) => o.includes(gone)), gone).toBe(false);
   await expect(page.getByTestId('export')).toHaveText('画像を書き出す（2400×1800）');
   await page.getByTestId('space-world').selectOption('mosaic');
-  await expect(page.getByTestId('panel')).toContainText('長方形の数');
-  // Gone from the screen in 019 (FR-1911).
+  // One slider since 021 (FR-2101); 写真に合わせる強さ gone in 019 (FR-1911).
+  await expect(page.getByTestId('panel')).toContainText('変貌');
   await expect(page.getByTestId('panel')).not.toContainText('写真に合わせる強さ');
   await expect(page.getByTestId('panel')).not.toContainText('（闇と光）');
 });
 
-test('テンプレートで効くスライダーと囲みだけが出る（017 FR-1704, FR-1706）', async ({ page }) => {
+test('どのモードでも囲みが効く（017 FR-1706, 013B FR-1309）', async ({ page }) => {
   await withPhoto(page);
-  await page.getByTestId('space-world').selectOption('copies');
-  await waitForPreview(page);
-  expect(await shown(page)).toEqual(['lightShape', 'size']);
-  // The lasso decides the subject in every template since 013B (FR-1309).
-  await expect(page.getByTestId('lasso-status')).toBeVisible();
-  await page.getByTestId('space-world').selectOption('mosaic');
-  await waitForPreview(page);
-  expect(await shown(page)).toEqual(['count']);
-  await expect(page.getByTestId('lasso-status')).toBeVisible();
-  await page.getByTestId('space-world').selectOption('echo');
-  await waitForPreview(page);
-  expect(await shown(page)).toEqual(['size']);
-});
-
-test('スライダーは「背景」「主役」「全体」の見出しで分かれる（017 SC-1705）', async ({ page }) => {
-  await withPhoto(page);
-  const headings = async () => (await page.locator('[data-testid="slider-group"]:visible > .group-title').allTextContents()).map((t) => t.trim());
-  await page.getByTestId('space-world').selectOption('copies');
-  expect(await headings()).toEqual(['背景', '主役']);
-  await page.getByTestId('space-world').selectOption('mosaic');
-  expect(await headings()).toEqual(['主役']);
+  for (const mode of ['copies', 'mosaic', 'echo']) {
+    await page.getByTestId('space-world').selectOption(mode);
+    await waitForPreview(page);
+    await expect(page.getByTestId('lasso-status'), mode).toBeVisible();
+  }
 });
 
 test('「反映」で絵に、「元の画像を表示」で設定はそのまま元の写真に（017 FR-1705）', async ({ page }) => {

@@ -4,7 +4,7 @@ import type { Camera } from '../../shared/camera';
 import type { PhotoObject } from '../../shared/object';
 import { newLayer, renderPlates, type Layer, type Mask, type Plate } from '../../shared/plates';
 import { drawsFrom } from '../../draws';
-import type { SpaceControls, Vec3 } from '../../types';
+import { FIXED_LOOK, chaosOf, type SpaceControls, type Vec3 } from '../../types';
 
 /**
  * World ④ The subject split, rebuilt and overlapped (003 FR-305; from 002 Phase 13, R-214): like splitting a stump,
@@ -151,8 +151,25 @@ export interface FragmentPlacement {
 
 const centroid = (p: Poly): [number, number] => [p.reduce((s, q) => s + q[0], 0) / p.length, p.reduce((s, q) => s + q[1], 0) / p.length];
 
-/** Where every piece of every copy goes (box units relative to the box centre). */
-export function fragmentLayout(p: FragmentParams, pieces: Poly[]): FragmentPlacement[] {
+/**
+ * The pieces wilder for 変貌 beyond 0.5 (021 FR-2103): more pieces, thrown further, turned and lifted more; 0 as drawn.
+ */
+export function wilderSplit(p: FragmentParams, chaos: number): FragmentParams {
+  if (chaos <= 0) return p;
+  return {
+    ...p,
+    pieces: Math.min(MAX_PIECES, p.pieces + Math.round(4 * chaos)),
+    explode: p.explode * (1 + 3 * chaos),
+    spin: p.spin.map((v) => v * (1 + 4 * chaos)),
+    lift: p.lift.map((v) => v * (1 + 4 * chaos)),
+  };
+}
+
+/**
+ * Where every piece of every copy goes (box units relative to the box centre). `chaos` (021 FR-2103) lets every piece
+ * leave the pattern by a share of its own offset, so the pattern breaks up gradually.
+ */
+export function fragmentLayout(p: FragmentParams, pieces: Poly[], chaos = 0): FragmentPlacement[] {
   const out: FragmentPlacement[] = [];
   const pairs = pieces.length * (p.copies - 1);
   // Which (piece, copy ≥ 1) pairs leave the pattern in the random mode: some, never none or all.
@@ -175,14 +192,15 @@ export function fragmentLayout(p: FragmentParams, pieces: Poly[]): FragmentPlace
     for (let j = 0; j < p.copies; j++) {
       const q = j === 0 ? -1 : k * (p.copies - 1) + (j - 1);
       const on = q >= 0 && jitterOn[q];
-      const jit: [number, number, number] = on ? [(p.jitter[q * 4 + 1] - 0.5) * 0.4, (p.jitter[q * 4 + 2] - 0.5) * 0.4, (p.jitter[q * 4 + 3] - 0.5) * 0.6] : [0, 0, 0];
+      const share = on ? 1 + 2 * chaos : q >= 0 ? 3 * chaos : 0;
+      const jit: [number, number, number] = share > 0 ? [(p.jitter[q * 4 + 1] - 0.5) * 0.4 * share, (p.jitter[q * 4 + 2] - 0.5) * 0.4 * share, (p.jitter[q * 4 + 3] - 0.5) * 0.6 * share] : [0, 0, 0];
       out.push({
         piece: k,
         copy: j,
         base,
         pattern: [base[0] + j * p.step.dx, base[1] + j * p.step.dy],
         jit,
-        jittered: on,
+        jittered: share > 0,
         rot: p.spin[k] + j * p.step.rot,
         scale: Math.pow(p.step.scale, j),
         dz: p.lift[k] + j * p.step.dz,
@@ -216,7 +234,9 @@ function polyCoverage(poly: [number, number][], x: number, y: number, soft: numb
  * Each piece of each copy is a flat photo plate (straight edges stay straight), masked by its polygon and
  * the object's outline (a layer, merged over the background by the world).
  */
-export function splitLayer(p: FragmentParams, obj: PhotoObject, img: RgbImage, cam: Camera, c: SpaceControls, W: number, H: number): Layer {
+export function splitLayer(drawn: FragmentParams, obj: PhotoObject, img: RgbImage, cam: Camera, c: SpaceControls, W: number, H: number): Layer {
+  const chaos = chaosOf(c);
+  const p = wilderSplit(drawn, chaos);
   const aspect = img.width / img.height;
   const [u0, v0, u1, v1] = obj.box;
   const bw = (u1 - u0) * aspect;
@@ -227,7 +247,7 @@ export function splitLayer(p: FragmentParams, obj: PhotoObject, img: RgbImage, c
   const cv = (v0 + v1) / 2;
   const tanHalf = Math.tan(cam.fov / 2);
   // World units per photo height: the object stands about (0.9..1.3) × half the screen height tall.
-  const k = ((0.9 + 0.4 * c.size) * tanHalf * p.z0) / Math.max(bh, 0.05);
+  const k = ((0.9 + 0.4 * FIXED_LOOK.size) * tanHalf * p.z0) / Math.max(bh, 0.05);
   const centre: [number, number] = [p.side * 0.25 * tanHalf * p.z0, 0];
   const pieces = splitPieces(p);
   // The object's own mask, read through the square crop around its box.
@@ -254,7 +274,7 @@ export function splitLayer(p: FragmentParams, obj: PhotoObject, img: RgbImage, c
     return { w: res, h: res, a };
   });
   const plates: Plate[] = [];
-  for (const e of fragmentLayout(p, pieces)) {
+  for (const e of fragmentLayout(p, pieces, chaos)) {
     const poly = pieces[e.piece];
     const pc = [poly.reduce((s, q) => s + q[0], 0) / poly.length, poly.reduce((s, q) => s + q[1], 0) / poly.length];
     const ox = ((pc[0] - 0.5) * bw) / side;
