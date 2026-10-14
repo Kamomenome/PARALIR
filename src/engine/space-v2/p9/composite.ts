@@ -1,4 +1,4 @@
-import { lightShape, type LightShape } from '../shared/atmosphere';
+import { lightReach, lightShape, type LightShape } from '../shared/atmosphere';
 import type { ImageFeatures } from '../../common/analysis/features';
 import type { RgbImage } from '../../common/image/normalize';
 import { clip, mirror, smoothstep } from '../../common/math';
@@ -182,7 +182,7 @@ function photoLightField(img: RgbImage, comp: SpaceComposition, W: number, H: nu
         // Straight light (005 FR-507): the photo's light read along the light and away from it.
         const sh = shapeAt(comp, x + 0.5, y + 0.5, W, H);
         a = mirror(sh.s * 0.45 + 2 * comp.lightTwist);
-        radial01 = clip(sh.d / (comp.shape!.kind === 'edge' ? 2 : 0.8), 0, 1);
+        radial01 = clip(sh.d / lightReach(comp.shape!), 0, 1);
       }
       const [u0, v0, span] = comp.lightWindow;
       sampleSmall(lm, u0 + span * a, v0 + span * (flipV ? 1 - radial01 : radial01), c);

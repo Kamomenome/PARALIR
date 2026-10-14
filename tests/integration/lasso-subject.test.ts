@@ -26,7 +26,8 @@ describe('the lasso decides the subject in every way (013B FR-1309)', () => {
   });
 
   it('their versions are raised', () => {
-    expect(SPACE_ALGORITHM_VERSIONS).toMatchObject({ copies: 'copies-v5', split: 'split-v5', echo: 'echo-v2' });
+    // Raised from the versions before 013B (copies-v4, split-v4, echo-v1), and since.
+    for (const [k, old] of [['copies', 'copies-v4'], ['split', 'split-v4'], ['echo', 'echo-v1']]) expect(SPACE_ALGORITHM_VERSIONS[k]).not.toBe(old);
   });
 });
 

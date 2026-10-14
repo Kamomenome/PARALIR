@@ -5,7 +5,7 @@ export const echo: WorldDef<'echo', EchoParams> = {
   type: 'echo',
   label: '入れ子',
   note: '主役の形の中に、小さな主役を並べる',
-  version: 'echo-v2',
+  version: 'echo-v3',
   usesRange: true,
   odds: () => 1.0,
   build: (x) => buildEcho(x.seeds.streams.echo),

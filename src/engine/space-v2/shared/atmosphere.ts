@@ -10,9 +10,10 @@ import { buildLayout, type SpaceLayout } from './layout';
 import { lightMap, linearSmall, sampleSmall } from './photo';
 import type { Layer } from './plates';
 import { drawsFrom } from '../draws';
+import { lattice, valueNoise } from './spread';
 
 /** The background's version: raise it whenever the background's output changes (003). */
-export const ATMOSPHERE_VERSION = 'atmosphere-v2';
+export const ATMOSPHERE_VERSION = 'atmosphere-v3';
 
 /**
  * The background (003 FR-314, research R-310): the 002 Phase 9 background the user liked (commit 6842075),
@@ -30,25 +31,32 @@ export interface PixelMap {
 }
 
 /**
- * The shape of the light (003 FR-315): round (the 002 Phase 9 void and halo), from one edge of the frame,
- * or straight bands across it. Edge and band light is constant along lines in direction `angle`.
+ * The shape of the light (003 FR-315; 021 FR-2105): round (the 002 Phase 9 void and halo), or chaotic — arms
+ * swirling round a centre, cracks of light breaking out from a point, flames licking along a line, or lights scattered
+ * over the frame. No straight light since 021 (the user: 直線と円しかないのは微妙, 背景の光が要求と違う).
  */
-export const LIGHT_SHAPES = ['ring', 'edge', 'band'] as const;
+export const LIGHT_SHAPES = ['ring', 'swirl', 'cracks', 'flame', 'scatter'] as const;
 export type LightShapeKind = (typeof LIGHT_SHAPES)[number];
 
 export interface LightShape {
   kind: LightShapeKind;
-  /** Direction (screen radians) of the lines along which the light is constant. */
+  /** Flame: direction (screen radians) of the line the flames lick along. Swirl and cracks: their start angle. */
   angle: number;
-  /** Edge: which side the light comes from (+1/-1 along the normal). */
+  /** Swirl: which way it turns (+1/-1). */
   side: number;
-  /** Band: offset of the bands (half-heights). */
+  /** Flame: offset of the flames from the centre (half-heights). */
   offset: number;
-  /** Band: count and spacing (half-heights). */
+  /** Flame: how many tongues and their spacing (half-heights). Swirl: arms. Cracks, scatter: how many. */
   count: number;
   spacing: number;
-  /** Band: half-width. Edge: reach of the light into the frame (half-heights). */
+  /** Half-width of an arm, a crack, a flame or the size of a light (half-heights). */
   width: number;
+  /** Swirl and cracks: their centre (half-heights from the frame centre). */
+  centre: [number, number];
+  /** Swirl: how tightly the arms wind. Flame: how far the flames sway. Cracks: how jagged they are. */
+  twist: number;
+  /** The seed of each crack's, light's and flame's own values. */
+  seed: number;
 }
 
 export interface Atmosphere {
@@ -68,16 +76,17 @@ export interface Atmosphere {
 export async function buildAtmosphere(stream: Uint8Array, features: ImageFeatures, featureInfluence: number, aspect: number): Promise<Atmosphere> {
   const e = effectiveFeatures(features, featureInfluence);
   const layout = await buildLayout(stream, e);
-  const [cam, look, lw, kind, sh, flame, env] = await Promise.all([
+  const [cam, look, lw, kind, sh, sh2, flame, env] = await Promise.all([
     drawsFrom(stream, 'camera/base', 2),
     drawsFrom(stream, 'look/base', 2),
     drawsFrom(stream, 'look/light', 4),
     drawsFrom(stream, 'atmos/kind', 1),
     drawsFrom(stream, 'atmos/shape', 8),
+    drawsFrom(stream, 'atmos/shape2', 8),
     buildFlame(stream, e, layout),
     buildBackgrounds(stream, e, aspect),
   ]);
-  const shape = lightShapeFrom(sh);
+  const shape = lightShapeFrom(sh, sh2);
   env.sphere = sphereTiltFor(env.sphere, shape);
   return {
     shape,
@@ -132,21 +141,30 @@ function lightAngle(ox: number, oy: number, L: SpaceLayout, twist: number): numb
   return 0.6 * mirror(2 * a01 + 2 * twist) + 0.4 * mirror(4 * a01 + 3.4 * twist);
 }
 
-/** A light shape from 8 uniforms (003 FR-315): a ring about one time in five, else light from an edge or bands. */
-export function lightShapeFrom(sh: number[]): LightShape {
-  const kind: LightShapeKind = sh[0] < 0.2 ? 'ring' : sh[0] < 0.6 ? 'edge' : 'band';
-  // Edge light comes from one of the four sides, slightly tilted; bands run at any straight angle.
-  const edgeDir = Math.floor(sh[1] * 4) * (Math.PI / 2) + (sh[2] - 0.5) * 0.5;
+/**
+ * A light shape from 16 uniforms (003 FR-315; 021 FR-2105): a ring about one time in five (`sh[0]`, as before), else
+ * one of the four chaotic shapes (`sh2[0]`), its values from the rest.
+ */
+export function lightShapeFrom(sh: number[], sh2: number[]): LightShape {
+  const chaotic: LightShapeKind[] = ['swirl', 'cracks', 'flame', 'scatter'];
+  const kind: LightShapeKind = sh[0] < 0.2 ? 'ring' : chaotic[Math.min(3, Math.floor(sh2[0] * 4))];
+  const many = kind === 'swirl' ? 2 + Math.floor(sh2[3] * 4) : kind === 'cracks' ? 7 + Math.floor(sh2[3] * 9) : kind === 'scatter' ? 3 + Math.floor(sh2[3] * 5) : 1 + Math.floor(sh[5] * 3);
   return {
     kind,
-    angle: kind === 'edge' ? edgeDir : Math.PI * sh[2],
+    angle: Math.PI * 2 * sh[2],
     side: sh[3] < 0.5 ? -1 : 1,
     offset: (sh[4] - 0.5) * 0.8,
-    count: 1 + Math.floor(sh[5] * 3),
+    count: many,
     spacing: 0.5 + 0.5 * sh[6],
-    width: kind === 'edge' ? 0.6 + 0.5 * sh[7] : 0.12 + 0.16 * sh[7],
+    width: kind === 'scatter' ? 0.15 + 0.2 * sh[7] : kind === 'cracks' ? 0.03 + 0.04 * sh[7] : 0.12 + 0.16 * sh[7],
+    centre: [(sh2[1] - 0.5) * 1.2, (sh2[2] - 0.5) * 0.8],
+    twist: 0.4 + 0.8 * sh2[4],
+    seed: Math.floor(sh2[5] * 2 ** 31),
   };
 }
+
+/** How far the photo's light is read away from the light (the d of lightShape that reaches its far end). */
+export const lightReach = (s: LightShape) => (s.kind === 'scatter' ? 1 : 0.8);
 
 /** Only round light looks into the sphere's pole (a radial tunnel); the other shapes see its horizon (003). */
 export function sphereTiltFor<T extends { tilt: number }>(sphere: T, shape: LightShape): T {
@@ -172,20 +190,64 @@ export function lightShape(a: Pick<Atmosphere, 'shape' | 'layout' | 'voidRadius'
   }
   const fx = (x - W / 2) / (H / 2);
   const fy = (y - H / 2) / (H / 2);
+  const glow = (d: number, w: number) => Math.exp(-((d / w) ** 2));
+  if (sh.kind === 'swirl') {
+    // Arms winding out of the centre: the arm a pixel is nearest to, measured along the circle.
+    const dx = fx - sh.centre[0];
+    const dy = fy - sh.centre[1];
+    const r = Math.hypot(dx, dy) + 1e-6;
+    const th = Math.atan2(dy, dx);
+    const phase = (sh.count * (th + sh.side * 2.2 * sh.twist * Math.log(r + 0.05) - sh.angle)) / (2 * Math.PI);
+    const across = Math.abs(phase - Math.round(phase)) * ((2 * Math.PI * r) / sh.count);
+    const w = sh.width * (0.6 + 0.8 * Math.min(1, r));
+    return { intensity: 0.05 + 1.9 * glow(across, w) * Math.exp(-r / 2.2), voidFactor: 1, s: Math.abs(th) / Math.PI, d: across };
+  }
+  if (sh.kind === 'cracks') {
+    // Cracks of light from one point, each with its own angle, length and width, bent by noise along it.
+    const dx = fx - sh.centre[0];
+    const dy = fy - sh.centre[1];
+    const r = Math.hypot(dx, dy);
+    const th = Math.atan2(dy, dx);
+    let best = 0;
+    let near = Infinity;
+    for (let k = 0; k < sh.count; k++) {
+      const bend = (valueNoise(sh.seed + 31 * k, r * 3, 0) - 0.5) * sh.twist;
+      const a = sh.angle + 2 * Math.PI * lattice(sh.seed, k, 0) + bend;
+      const cos = Math.cos(th - a);
+      if (cos <= 0) continue;
+      const across = Math.abs(Math.sin(th - a)) * r;
+      const len = 0.8 + 1.8 * lattice(sh.seed, k, 2);
+      const v = glow(across, sh.width * (0.5 + lattice(sh.seed, k, 1)) * (1 + 0.6 * r)) * Math.exp(-r / len);
+      if (v > best) best = v;
+      near = Math.min(near, across);
+    }
+    const core = glow(r, 0.12);
+    return { intensity: 0.05 + 2.1 * Math.max(best, core), voidFactor: 1, s: Math.abs(th) / Math.PI, d: Math.min(near, r) };
+  }
+  if (sh.kind === 'scatter') {
+    // Lights of different sizes scattered over the frame.
+    let best = 0;
+    let near = Infinity;
+    for (let k = 0; k < sh.count; k++) {
+      const px = (lattice(sh.seed, k, 3) - 0.5) * 1.8 * (W / H);
+      const py = (lattice(sh.seed, k, 4) - 0.5) * 1.6;
+      const d = Math.hypot(fx - px, fy - py);
+      const v = glow(d, sh.width * (0.6 + 1.2 * lattice(sh.seed, k, 5)));
+      if (v > best) best = v;
+      near = Math.min(near, d);
+    }
+    return { intensity: 0.05 + 1.9 * best, voidFactor: 1, s: Math.atan2(fy, fx) / Math.PI + 1, d: near };
+  }
+  // Flames: tongues along a line, swaying with noise along it and flickering.
   const tx = Math.cos(sh.angle);
   const ty = Math.sin(sh.angle);
   const along = fx * tx + fy * ty;
   const across = -fx * ty + fy * tx;
-  if (sh.kind === 'edge') {
-    // Distance from the lit side of the frame, measured along the normal.
-    const extent = Math.abs(ty) * (W / H) + Math.abs(tx);
-    const d = Math.max(0, extent + sh.side * across);
-    return { intensity: 0.06 + 1.7 * Math.exp(-d / sh.width), voidFactor: 1, s: Math.abs(along), d };
-  }
-  // Parallel bands centred on the offset.
+  const sway = sh.twist * ((valueNoise(sh.seed, along * 1.4, 0) - 0.5) * 1.6 + (valueNoise(sh.seed + 7, along * 3.6, 0) - 0.5) * 0.6);
   let best = Infinity;
-  for (let k = 0; k < sh.count; k++) best = Math.min(best, Math.abs(across - sh.offset - (k - (sh.count - 1) / 2) * sh.spacing));
-  return { intensity: 0.05 + 1.8 * Math.exp(-((best / sh.width) ** 2)), voidFactor: 1, s: Math.abs(along), d: best };
+  for (let k = 0; k < sh.count; k++) best = Math.min(best, Math.abs(across - sh.offset - sway - (k - (sh.count - 1) / 2) * sh.spacing));
+  const flicker = 0.55 + 0.45 * valueNoise(sh.seed + 3, along * 2.2, across * 2.2);
+  return { intensity: 0.05 + 1.9 * glow(best, sh.width * (0.7 + 0.6 * flicker)) * flicker, voidFactor: 1, s: Math.abs(along), d: best };
 }
 
 /**
@@ -235,7 +297,7 @@ function photoLightField(img: RgbImage, comp: Atmosphere, W: number, H: number, 
         // Straight light: the photo's light read along the light (across the window) and away from it (down).
         const sh = lightShape(comp, x + 0.5, y + 0.5, W, H);
         a = mirror(sh.s * 0.45 + 2 * comp.lightTwist);
-        radial01 = clip(sh.d / (comp.shape.kind === 'edge' ? 2 : 0.8), 0, 1);
+        radial01 = clip(sh.d / lightReach(comp.shape), 0, 1);
       }
       const [u0, v0, span] = comp.lightWindow;
       sampleSmall(lm, u0 + span * a, v0 + span * (flipV ? 1 - radial01 : radial01), c);

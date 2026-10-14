@@ -29,9 +29,9 @@ export interface ThemeParams {
 }
 
 export async function buildTheme(stream: Uint8Array, seedInput: SeedInput, features: ImageFeatures, img: RgbImage): Promise<ThemeParams> {
-  const [[d], sh] = await Promise.all([drawsFrom(stream, 'theme/foreground', 1), drawsFrom(stream, 'theme/shape', 8)]);
+  const [[d], sh, sh2] = await Promise.all([drawsFrom(stream, 'theme/foreground', 1), drawsFrom(stream, 'theme/shape', 8), drawsFrom(stream, 'theme/shape2', 8)]);
   const p9Seeds = await deriveP9Seeds(['space-v1', ...seedInput.slice(1)] as SeedInput);
-  const shape = lightShapeFrom(sh);
+  const shape = lightShapeFrom(sh, sh2);
   const p9 = withShape({ ...(await composeSpace(p9Seeds, features, { ...P9_CONTROLS }, img)), shape }, shape);
   // Straight light: not the foregrounds that are radial by themselves (they would look round again).
   const choices = shape.kind === 'ring' ? THEME_FOREGROUNDS : THEME_FOREGROUNDS.filter((f) => f !== 'surface' && f !== 'kaleidoscope');

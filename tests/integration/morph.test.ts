@@ -41,13 +41,20 @@ describe('変貌, the one slider (021 FR-2101–2104)', () => {
     it(`${type}: 0 is the photo; at 0.25 the rest is further on its way than the subject; 0.75 and 1 go further from 0.5`, async () => {
       const s = await work();
       expect(diff(draw(s, type, 0), photo)).toBe(0);
-      const subject = lassoMask(loop, W, H);
+      // The lasso's core and well outside it: the edge is neither (rectangles step over the outline).
+      const around = (k: number): Lasso => {
+        const cx = loop.reduce((s, p) => s + p[0], 0) / loop.length;
+        const cy = loop.reduce((s, p) => s + p[1], 0) / loop.length;
+        return loop.map(([u, v]) => [cx + (u - cx) * k, cy + (v - cy) * k]);
+      };
+      const core = lassoMask(around(0.6), W, H);
+      const near = lassoMask(around(1.4), W, H);
       const quarter = draw(s, type, 0.25);
       const half = draw(s, type, 0.5);
       // How far each part has gone of its way from the photo to the world (some modes leave the rest as the photo).
       const way = (at: (i: number) => boolean) => diff(quarter, photo, at) / Math.max(1e-9, diff(half, photo, at));
-      const out = (i: number) => !subject[i];
-      const inn = (i: number) => !!subject[i];
+      const out = (i: number) => !near[i];
+      const inn = (i: number) => !!core[i];
       expect(diff(half, photo, inn)).toBeGreaterThan(0);
       if (diff(half, photo, out) > 0.5) expect(way(out)).toBeGreaterThan(way(inn));
       expect(way(inn)).toBeLessThan(0.5);

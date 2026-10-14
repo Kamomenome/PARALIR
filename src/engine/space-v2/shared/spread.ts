@@ -14,7 +14,7 @@ export function lattice(seed: number, x: number, y: number): number {
 }
 
 /** Smooth value noise in [0, 1] at (x, y) in lattice units. */
-function valueNoise(seed: number, x: number, y: number): number {
+export function valueNoise(seed: number, x: number, y: number): number {
   const x0 = Math.floor(x);
   const y0 = Math.floor(y);
   const fx = x - x0;
@@ -27,11 +27,11 @@ function valueNoise(seed: number, x: number, y: number): number {
 }
 
 /**
- * Where the other world comes first (021 FR-2102): 0..1 over the frame, evenly spread (each value covers the same share
- * of the frame). Tangled noise from the seed, four octaves, with the photo's light: bright places go a little later.
- * Measured in heights, so the shapes are the same at any size.
+ * Where the other world comes first (021 FR-2102): 0..1 over the frame, evenly spread within each group (each value
+ * covers the same share of the subject, and of the rest, whatever their light). Tangled noise from the seed, four
+ * octaves, with the photo's light: bright places go a little later. Measured in heights, the same at any size.
  */
-export function spreadField(seed: number, photo: Uint8ClampedArray, W: number, H: number): Float32Array {
+export function spreadField(seed: number, photo: Uint8ClampedArray, W: number, H: number, group: Uint8Array = new Uint8Array(W * H)): Float32Array {
   const lum = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) lum[i] = (0.2126 * photo[4 * i] + 0.7152 * photo[4 * i + 1] + 0.0722 * photo[4 * i + 2]) / 255;
   blurChannel(lum, W, H, Math.max(1, Math.round(0.02 * H)));
@@ -52,13 +52,17 @@ export function spreadField(seed: number, photo: Uint8ClampedArray, W: number, H
       f[y * W + x] = 0.7 * (n / total) + 0.3 * lum[y * W + x];
     }
   }
-  // Even out: the share of the frame below a value is that value (a histogram's running total).
+  // Even out within each group: the share of it below a value is that value (a histogram's running total).
   const bins = 1024;
-  const hist = new Float64Array(bins + 1);
-  for (const v of f) hist[Math.min(bins, Math.floor(clip(v, 0, 1) * bins))]++;
-  for (let b = 1; b <= bins; b++) hist[b] += hist[b - 1];
-  const n = W * H;
-  for (let i = 0; i < n; i++) f[i] = hist[Math.min(bins, Math.floor(clip(f[i], 0, 1) * bins))] / n;
+  const bin = (v: number) => Math.min(bins, Math.floor(clip(v, 0, 1) * bins));
+  for (const g of [0, 1]) {
+    const hist = new Float64Array(bins + 1);
+    let n = 0;
+    for (let i = 0; i < W * H; i++) if (group[i] === g) (hist[bin(f[i])]++, n++);
+    if (!n) continue;
+    for (let b = 1; b <= bins; b++) hist[b] += hist[b - 1];
+    for (let i = 0; i < W * H; i++) if (group[i] === g) f[i] = hist[bin(f[i])] / n;
+  }
   return f;
 }
 
@@ -72,8 +76,8 @@ const reach = (u: number, f: number) => clip((1.15 * u - f) / 0.1, 0, 1);
 export function spreadOver(world: Uint8ClampedArray, seed: number, obj: PhotoObject, img: RgbImage, W: number, H: number, u: number): Uint8ClampedArray {
   const photo = toDisplay(framePhoto(img, W, H), W, H, false);
   if (u <= 0) return photo;
-  const field = spreadField(seed, photo, W, H);
   const subject = regionMask(obj, img, W, H);
+  const field = spreadField(seed, photo, W, H, Uint8Array.from(subject, (v) => (v > 0.5 ? 1 : 0)));
   const us = clip((u - 0.4) / 0.6, 0, 1);
   const out = new Uint8ClampedArray(W * H * 4);
   for (let i = 0; i < W * H; i++) {
@@ -85,36 +89,67 @@ export function spreadOver(world: Uint8ClampedArray, seed: number, obj: PhotoObj
   return out;
 }
 
+/** Labradorite's play of colour, in a ring: deep blue, blue, blue-green, green, gold, copper, violet (sRGB 0..255). */
+const LABRADORITE: [number, number, number][] = [
+  [24, 52, 170],
+  [40, 120, 245],
+  [0, 180, 175],
+  [70, 200, 95],
+  [235, 190, 45],
+  [225, 110, 40],
+  [140, 60, 215],
+];
+
+function paletteAt(t: number, out: number[]): void {
+  const n = LABRADORITE.length;
+  const x = (((t % 1) + 1) % 1) * n;
+  const k = Math.floor(x);
+  const f = x - k;
+  const s = f * f * (3 - 2 * f);
+  const a = LABRADORITE[k % n];
+  const b = LABRADORITE[(k + 1) % n];
+  for (let c = 0; c < 3; c++) out[c] = a[c] + (b[c] - a[c]) * s;
+}
+
 /**
- * The colours of what changed turn (021 FR-2108): each pixel's hue turned by `degrees` around the grey axis of RGB (grey
- * stays grey) and its saturation scaled by `satK`, as much as its weight (0: as it is).
+ * The colours of what changed play like labradorite (021 FR-2108): a dark greyish body, and flashes of blue, green,
+ * gold and violet in streaks and patches, the colour chosen by a film thickness that runs along lamellae (noise
+ * stretched one way, its direction from the seed) and the photo's light. The flashes spread as `chaos` grows; the
+ * photo's light and shade stay in them. Weight 0 leaves a pixel as it is.
  */
-export function turnHue(rgba: Uint8ClampedArray, weight: Float32Array, degrees: number, satK: number): Uint8ClampedArray {
-  const a = (degrees * Math.PI) / 180;
-  const cos = Math.cos(a);
-  const s3 = Math.sqrt(1 / 3) * Math.sin(a);
-  const k = (1 - cos) / 3;
-  const m = [cos + k, k - s3, k + s3, k + s3, cos + k, k - s3, k - s3, k + s3, cos + k];
-  const out = new Uint8ClampedArray(rgba.length);
-  for (let i = 0; i < weight.length; i++) {
-    const r = rgba[4 * i];
-    const g = rgba[4 * i + 1];
-    const b = rgba[4 * i + 2];
-    const w = weight[i];
-    out[4 * i + 3] = rgba[4 * i + 3];
-    if (w <= 0) {
-      out[4 * i] = r;
-      out[4 * i + 1] = g;
-      out[4 * i + 2] = b;
-      continue;
+export function labradorite(rgba: Uint8ClampedArray, weight: Float32Array, seed: number, chaos: number, W: number, H: number): Uint8ClampedArray {
+  const out = Uint8ClampedArray.from(rgba);
+  const dir = 2 * Math.PI * lattice(seed, 0, 9);
+  const cos = Math.cos(dir);
+  const sin = Math.sin(dir);
+  const phase = lattice(seed, 1, 9);
+  const spread = 0.8 - 0.55 * Math.min(1, chaos);
+  const amount = Math.min(1, 1.4 * chaos);
+  const col = [0, 0, 0];
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const w = weight[i] * amount;
+      if (w <= 0) continue;
+      const r = rgba[4 * i];
+      const g = rgba[4 * i + 1];
+      const b = rgba[4 * i + 2];
+      const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      const u = (x * cos + y * sin) / H;
+      const v = (-x * sin + y * cos) / H;
+      // Lamellae: fine along one way, long the other.
+      const film = 0.65 * valueNoise(seed, u * 2.2, v * 14) + 0.35 * valueNoise(seed + 5, u * 5, v * 30) + 0.5 * lum + phase;
+      paletteAt(film, col);
+      const flash = clip((valueNoise(seed + 11, u * 3, v * 3) * 0.7 + 0.3 * valueNoise(seed + 13, u * 9, v * 9) - spread) / 0.18 + 0.5, 0, 1);
+      // The body: the photo's light and shade, dark and greyish.
+      const body = 40 + 120 * lum;
+      const glow = 0.35 + 1.15 * lum;
+      for (let c = 0; c < 3; c++) {
+        const o = c === 0 ? r : c === 1 ? g : b;
+        const target = body * 0.85 + (col[c] * glow - body * 0.85) * flash;
+        out[4 * i + c] = Math.round(o + (target - o) * w);
+      }
     }
-    const tr = m[0] * r + m[1] * g + m[2] * b;
-    const tg = m[3] * r + m[4] * g + m[5] * b;
-    const tb = m[6] * r + m[7] * g + m[8] * b;
-    const l = 0.2126 * tr + 0.7152 * tg + 0.0722 * tb;
-    out[4 * i] = Math.round(r + (l + (tr - l) * satK - r) * w);
-    out[4 * i + 1] = Math.round(g + (l + (tg - l) * satK - g) * w);
-    out[4 * i + 2] = Math.round(b + (l + (tb - l) * satK - b) * w);
   }
   return out;
 }

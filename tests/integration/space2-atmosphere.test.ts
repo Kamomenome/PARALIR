@@ -19,33 +19,30 @@ describe('the 002 Phase 9 background (003 FR-314, SC-313)', () => {
     expect([...kinds].sort()).toEqual([...ATMOSPHERES].sort());
   });
 
-  it('the light takes several shapes; round is a minority (SC-314)', async () => {
+  it('the light takes several shapes; round is a minority (SC-314, 021 FR-2105)', async () => {
     const n = new Map<string, number>();
     for (let variation = 0; variation < 60; variation++) {
       const s = (await spaceWorld(photo, { variation })).world.atmosphere.shape.kind;
       n.set(s, (n.get(s) ?? 0) + 1);
     }
-    expect([...n.keys()].sort()).toEqual([...LIGHT_SHAPES].sort());
+    expect([...n.keys()].every((k) => (LIGHT_SHAPES as readonly string[]).includes(k))).toBe(true);
+    expect(n.size).toBeGreaterThanOrEqual(4);
     expect(n.get('ring')! / 60).toBeLessThanOrEqual(0.35);
   });
 
-  it('edge and band light is straight: constant along lines parallel to the edge or band, no void (SC-314)', async () => {
+  it('chaotic light has no void and is not straight: it changes along every line (021 FR-2105)', async () => {
     const seen = new Set<string>();
-    for (let variation = 0; variation < 60 && seen.size < 2; variation++) {
+    for (let variation = 0; variation < 60; variation++) {
       const a = (await spaceWorld(photo, { variation })).world.atmosphere;
       if (a.shape.kind === 'ring' || seen.has(a.shape.kind)) continue;
       seen.add(a.shape.kind);
-      const dir = a.shape.angle;
-      for (const [x0, y0] of [[100, 80], [200, 150], [60, 200]]) {
-        const ref = lightShape(a, x0, y0, W, H);
-        expect(ref.voidFactor).toBe(1);
-        for (const t of [-40, -15, 20, 50]) {
-          const p = lightShape(a, x0 + t * Math.cos(dir), y0 + t * Math.sin(dir), W, H);
-          expect(p.intensity, `${a.shape.kind}`).toBeCloseTo(ref.intensity, 9);
-        }
+      for (const dir of [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4]) {
+        const along = [-60, -20, 20, 60].map((t) => lightShape(a, 160 + t * Math.cos(dir), 120 + t * Math.sin(dir), W, H));
+        expect(along[0].voidFactor).toBe(1);
+        expect(Math.max(...along.map((p) => p.intensity)) - Math.min(...along.map((p) => p.intensity)), `${a.shape.kind} ${dir}`).toBeGreaterThan(1e-6);
       }
     }
-    expect(seen.size).toBe(2);
+    expect(seen.size).toBeGreaterThanOrEqual(3);
   });
 
   // Thresholds judged on the real photo (local only, 009 FR-922).

@@ -9,7 +9,7 @@ import { buildAtmosphere, renderAtmosphere, type Atmosphere } from './shared/atm
 import { finish } from './shared/backdrop';
 import { Hdr } from './shared/hdr';
 import { mainObject, mosaicObject, rangeObject } from './shared/object';
-import { changedWeight, spreadOver, turnHue } from './shared/spread';
+import { changedWeight, labradorite, spreadOver } from './shared/spread';
 import { drawsFrom } from './draws';
 import type { SpaceSeeds } from './seeds';
 import { FIXED_LOOK, chaosOf, type SpaceControls } from './types';
@@ -40,8 +40,8 @@ export type SpaceWorld = {
   atmosphere: Atmosphere;
   /** The seed of where the world spreads over the photo below 変貌 0.5 (021 FR-2102). */
   morphSeed: number;
-  /** How far (degrees, either way) the colours of what changed turn at 変貌 1 (021 FR-2108). */
-  morphHue: number;
+  /** The seed of labradorite's colours over what changed beyond 変貌 0.5 (021 FR-2108). */
+  morphTint: number;
 } & WorldParams;
 
 export interface WorldRender {
@@ -78,7 +78,7 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
     drawsFrom(s.type, 'type/main', 2),
     drawsFrom(s.camera, 'camera/main', 2),
     drawsFrom(s.type, 'morph/seed', 1),
-    drawsFrom(s.type, 'morph/hue', 2),
+    drawsFrom(s.type, 'morph/hue', 1),
   ]);
   const fov = ((58 + 14 * cam[0]) * Math.PI) / 180;
   const ctx: ComposeContext = { seeds, features, img, fov };
@@ -92,7 +92,7 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
     hasSubject,
     atmosphere,
     morphSeed: Math.floor(m * 2 ** 31),
-    morphHue: (hue[0] < 0.5 ? -1 : 1) * (90 + 60 * hue[1]),
+    morphTint: Math.floor(hue[0] * 2 ** 31),
     ...(Object.fromEntries(WORLDS.map((w, i) => [w.type, params[i]])) as WorldParams),
   };
 }
@@ -122,10 +122,10 @@ export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeature
   });
   // Below 0.5 the world spreads over the photo, the rest first and the subject after (021 FR-2102); 0.5 as drawn.
   if (c.morph < 0.5) return { rgba: spreadOver(out.rgba, w.morphSeed, obj, img, W, H, c.morph / 0.5), objects: out.objects };
-  // Beyond, the colours of what changed turn (021 FR-2108).
+  // Beyond, the colours of what changed play like labradorite (021 FR-2108).
   const chaos = chaosOf(c);
   if (chaos <= 0) return out;
-  return { rgba: turnHue(out.rgba, changedWeight(out.rgba, out.objects, img, W, H), chaos * w.morphHue, 1 + 0.4 * chaos), objects: out.objects };
+  return { rgba: labradorite(out.rgba, changedWeight(out.rgba, out.objects, img, W, H), w.morphTint, chaos, W, H), objects: out.objects };
 }
 
 /** The background alone, finished like a world (for tests and comparisons). */

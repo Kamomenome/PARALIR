@@ -7,7 +7,7 @@ export const split: WorldDef<'split', FragmentParams> = {
   type: 'split',
   label: '被写体の解体',
   note: '被写体を切り分けて重ねる',
-  version: 'split-v5',
+  version: 'split-v6',
   needsSubject: true,
   usesRange: true,
   odds: (_light, hasSubject) => (hasSubject ? 0.8 : 0),

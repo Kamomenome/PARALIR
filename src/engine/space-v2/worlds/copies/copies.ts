@@ -165,11 +165,11 @@ export function copyInstances(p: CopiesParams, sizeK = 1, chaos = 0): CopyInstan
   return chaos > 0 ? out.map((c, n) => scattered(c, p, n, chaos)) : out;
 }
 
-/** A copy thrown off its place (up to four of its sizes, and in depth), turned (up to π) and resized (½ to 2×) by its own scatter. */
+/** A copy thrown off its place (up to one and a half of its sizes, and in depth: it stays in view, 021 FR-2109), turned (up to π) and resized (½ to 2×) by its own scatter. */
 function scattered(c: CopyInstance, p: CopiesParams, n: number, chaos: number): CopyInstance {
   const [a, b, d] = [0, 1, 2].map((j) => 2 * (p.scatter[(3 * n + j) % p.scatter.length] - 0.5));
   const turn = Math.PI * chaos * a;
-  const reach = 4 * chaos * c.size;
+  const reach = 1.5 * chaos * c.size;
   return {
     ...c,
     size: c.size * 2 ** (chaos * d),

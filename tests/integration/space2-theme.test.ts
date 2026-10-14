@@ -62,8 +62,8 @@ describe('the theme world: the liked Phase 9 picture, with a part of the photo k
     }
   });
 
-  it('not only round light: the seed picks a ring, light from an edge or bands; only the ring has the dark void (005 FR-507, SC-506)', { timeout: 300_000 }, async () => {
-    const kinds: Record<string, number> = { ring: 0, edge: 0, band: 0 };
+  it('not only round light: the seed picks a ring or a chaotic light; only the ring has the dark void (005 FR-507, SC-506, 021 FR-2105)', { timeout: 300_000 }, async () => {
+    const kinds: Record<string, number> = { ring: 0, swirl: 0, cracks: 0, flame: 0, scatter: 0 };
     const pick: Record<string, number> = {};
     for (let variation = 0; variation < 60; variation++) {
       const k = (await spaceWorld(photo, { variation })).world.theme.shape.kind;
@@ -71,12 +71,11 @@ describe('the theme world: the liked Phase 9 picture, with a part of the photo k
       pick[k] ??= variation;
     }
     expect(kinds.ring).toBeGreaterThan(0);
-    expect(kinds.edge).toBeGreaterThan(0);
-    expect(kinds.band).toBeGreaterThan(0);
+    expect(Object.values(kinds).filter((n) => n > 0).length).toBeGreaterThanOrEqual(4);
     expect(kinds.ring / 60).toBeLessThanOrEqual(0.35);
     const w0 = 160;
     const h0 = 120;
-    for (const kind of ['edge', 'band', 'ring']) {
+    for (const kind of Object.keys(pick)) {
       const w = await spaceWorld(photo, { variation: pick[kind] });
       if (kind !== 'ring') expect(['surface', 'kaleidoscope'], `${kind}: not a radial foreground`).not.toContain(w.world.theme.foreground);
       const base = themeBase(w.world.theme, w.img, w.features, w0, h0, 0.4);
