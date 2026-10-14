@@ -1,8 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { applySpaceRecipe, createInitialState, nextWorld, prepareSource, setSpaceControls, withSource, type AppState } from '../../src/app/state';
-import { checkRecipe } from '../../src/app/recipeLoad';
-import { parseSpaceRecipe, toSpaceRecipe } from '../../src/engine/recipe';
+import { createInitialState, nextWorld, prepareSource, setSpaceControls, withSource, type AppState } from '../../src/app/state';
 import { lightShapeFrom, shapeVariants } from '../../src/engine/space-v2/shared/atmosphere';
 import { renderWorld, type SpaceWorld } from '../../src/engine/space-v2/world';
 import { readPngRgb } from '../helpers/png';
@@ -45,9 +43,9 @@ describe('光の形: round ↔ straight (019 FR-1907–1909, SC-1902)', () => {
         if (kinds.has(end)) continue;
         kinds.add(end);
         const plain = draw(s, type);
-        expect(draw(await setSpaceControls(s, { lightShape: end }), type)).toBe(plain);
-        const other = draw(await setSpaceControls(s, { lightShape: 1 - end }), type);
-        const mid = draw(await setSpaceControls(s, { lightShape: 0.5 }), type);
+        expect(draw(setSpaceControls(s, { lightShape: end }), type)).toBe(plain);
+        const other = draw(setSpaceControls(s, { lightShape: 1 - end }), type);
+        const mid = draw(setSpaceControls(s, { lightShape: 0.5 }), type);
         expect(other).not.toBe(plain);
         expect(mid).not.toBe(plain);
         expect(mid).not.toBe(other);
@@ -58,28 +56,6 @@ describe('光の形: round ↔ straight (019 FR-1907–1909, SC-1902)', () => {
 
   it('the mosaic and the nesting have no light shape', async () => {
     const { s } = await photo();
-    for (const type of ['mosaic', 'echo']) expect(draw(await setSpaceControls(s, { lightShape: 0.5 }), type)).toBe(draw(s, type));
-  });
-});
-
-describe('光の形 in recipes (019 FR-1908, SC-1903)', () => {
-  it('is written only once moved, and comes back', async () => {
-    const { src, s } = await photo();
-    expect(toSpaceRecipe(s).controls).not.toHaveProperty('lightShape');
-    const moved = await setSpaceControls(s, { lightShape: 0.3 });
-    const r = toSpaceRecipe(moved);
-    expect(r.controls.lightShape).toBe(0.3);
-    const check = await checkRecipe(JSON.stringify(r), src);
-    expect(check.ok).toBe(true);
-    if (check.ok) expect((await applySpaceRecipe(s, check.recipe, check.engineId)).spaceControls.lightShape).toBe(0.3);
-  });
-
-  it('out of range is refused; a recipe without it still opens', async () => {
-    const { s } = await photo();
-    const r = toSpaceRecipe(s);
-    expect(parseSpaceRecipe(JSON.stringify(r)).ok).toBe(true);
-    const bad = JSON.parse(JSON.stringify(r));
-    bad.controls.lightShape = 1.5;
-    expect(parseSpaceRecipe(JSON.stringify(bad)).ok).toBe(false);
+    for (const type of ['mosaic', 'echo']) expect(draw(setSpaceControls(s, { lightShape: 0.5 }), type)).toBe(draw(s, type));
   });
 });

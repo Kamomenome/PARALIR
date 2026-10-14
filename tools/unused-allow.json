@@ -1,9 +1,7 @@
 {
   "src/engine/common/parts/serialize.ts": "tools/parts-harness.ts（比較画像の道具）が部品を JSON にする",
-  "src/engine/engines.ts#registerEngine": "テストで凍結したエンジンを一覧に足すための口（009 SC-902）",
   "src/engine/space-v2/world.ts#WORLD_TYPES": "テストで世界の一覧と順番を確かめる",
   "src/engine/space-v2/world.ts#renderBackgroundOnly": "テストで背景だけを描いて確かめる",
-  "src/engine/space-v2/worlds/dark/dark.ts#DARK_KINDS": "テストで闇と光の種類がすべて出ることを確かめる",
   "src/engine/space-v2/shared/color.ts#toDisplay": "テストで色の変換を確かめる",
   "src/engine/space-v2/shared/plates.ts#projectedSize": "テストで板の見かけの大きさを確かめる",
   "src/engine/space-v2/p9/background.ts#AUTO_PIPELINE": "凍結（Phase 9 の再現、005）",

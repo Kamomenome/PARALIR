@@ -11,7 +11,7 @@ import { Hdr } from './shared/hdr';
 import { mainObject, mosaicObject, rangeObject } from './shared/object';
 import { drawsFrom } from './draws';
 import type { SpaceSeeds } from './seeds';
-import type { SpaceControls } from './types';
+import { FIXED_LOOK, type SpaceControls } from './types';
 import { SPACE_ALGORITHM_VERSIONS } from './versions';
 import type { ComposeContext, WorldDef } from './worldDef';
 import { WORLDS } from './worlds';
@@ -65,15 +65,15 @@ export function worldOdds(e: { L: number }, hasSubject: boolean): [WorldType, nu
 }
 
 /** The only place where random numbers are drawn (fixed ids and counts). */
-export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, controls: SpaceControls, img: RgbImage, parts: PhotoParts | null = null): Promise<SpaceWorld> {
-  const e = effectiveFeatures(features, controls.featureInfluence);
+export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, img: RgbImage, parts: PhotoParts | null = null): Promise<SpaceWorld> {
+  const e = effectiveFeatures(features, FIXED_LOOK.featureInfluence);
   const s = seeds.streams;
   const hasSubject = mainObject(img, features, parts).subject;
   const [t, cam] = await Promise.all([drawsFrom(s.type, 'type/main', 2), drawsFrom(s.camera, 'camera/main', 2)]);
   const fov = ((58 + 14 * cam[0]) * Math.PI) / 180;
   const ctx: ComposeContext = { seeds, features, img, fov };
   // Each world draws from its own stream, so building them together never changes their values.
-  const [atmosphere, ...params] = await Promise.all([buildAtmosphere(s.atmos, features, controls.featureInfluence, img.width / img.height), ...WORLDS.map((w) => w.build(ctx))]);
+  const [atmosphere, ...params] = await Promise.all([buildAtmosphere(s.atmos, features, FIXED_LOOK.featureInfluence, img.width / img.height), ...WORLDS.map((w) => w.build(ctx))]);
   return {
     engineVersion: 'space-v2',
     algorithms: SPACE_ALGORITHM_VERSIONS,
@@ -111,8 +111,8 @@ export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeature
 }
 
 /** The background alone, finished like a world (for tests and comparisons). */
-export function renderBackgroundOnly(a: Atmosphere, img: RgbImage, c: SpaceControls, W: number, H: number, quality = 0.4): Uint8ClampedArray {
+export function renderBackgroundOnly(a: Atmosphere, img: RgbImage, W: number, H: number, quality = 0.4): Uint8ClampedArray {
   const hdr = new Hdr(W, H);
-  renderAtmosphere(hdr, a, img, { glow: c.light, fog: 0.5 }, quality);
-  return finish(hdr, c, true);
+  renderAtmosphere(hdr, a, img, { glow: FIXED_LOOK.light, fog: 0.5 }, quality);
+  return finish(hdr, true);
 }

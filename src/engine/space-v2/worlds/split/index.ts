@@ -9,7 +9,7 @@ export const split: WorldDef<'split', FragmentParams> = {
   note: '被写体を切り分けて重ねる',
   version: 'split-v5',
   needsSubject: true,
-  controls: ['light', 'lightShape', 'size', 'darkness'],
+  controls: ['lightShape', 'size'],
   shapeOf: (w) => w.atmosphere.shape,
   usesRange: true,
   odds: (_light, hasSubject) => (hasSubject ? 0.8 : 0),
@@ -19,6 +19,6 @@ export const split: WorldDef<'split', FragmentParams> = {
     const layer = splitLayer(x.world.split, x.obj, x.img, x.world.camera, x.controls, x.W, x.H);
     dimPlates(layer, x.W * x.H);
     mergeFront(hdr, layer, light, look);
-    return { rgba: finish(hdr, x.controls, true), objects: layer.a };
+    return { rgba: finish(hdr, true), objects: layer.a };
   },
 };

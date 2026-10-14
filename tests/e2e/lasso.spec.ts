@@ -1,8 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { previewHash, showPhotoView, waitForPreview } from './helpers';
 
-test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで再現、外部通信 0 件（005 SC-504）', async ({ page, baseURL }) => {
+test('ざっくり囲むと範囲が変わり、消すと戻り、ひとつ戻すで同じ絵に、外部通信 0 件（005 SC-504）', async ({ page, baseURL }) => {
   test.setTimeout(300_000);
   const origin = new URL(baseURL!).origin;
   const external: string[] = [];
@@ -35,17 +34,12 @@ test('ざっくり囲むと範囲が変わり、消すと戻り、レシピで�
   const lassoed = await previewHash(page);
   expect(lassoed).not.toBe(before);
 
-  const recipe = page.waitForEvent('download');
-  await page.getByTestId('recipe-save').click();
-  const saved = JSON.parse(readFileSync((await (await recipe).path())!, 'utf8'));
-  expect(saved.lassos[0].length).toBeGreaterThanOrEqual(3);
-
   await page.getByTestId('lasso-clear').click();
   await waitForPreview(page);
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', 'none');
   expect(await previewHash(page)).toBe(before);
 
-  await page.setInputFiles('[data-testid="recipe-input"]', { name: 'r.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(saved)) });
+  await page.getByTestId('restore-previous').click();
   await expect(page.getByTestId('lasso-status')).toHaveAttribute('data-source', /^(lasso|lasso\+ai)$/, { timeout: 60_000 });
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(lassoed);

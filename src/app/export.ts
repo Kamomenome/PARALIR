@@ -1,3 +1,4 @@
+import { CURRENT_ENGINE } from '../engine/engines';
 import { APP_FILE_NAME } from './version';
 import type { RenderController } from './controller';
 import type { AppState } from './state';
@@ -16,7 +17,7 @@ export const PHOTO_MODE = 'photo';
 export function jobFor(state: AppState, _kind: 'preview' | 'export', _W: number, _H: number) {
   return {
     // The work's engine draws it, in the page and in the worker alike (009 FR-905); a new photo is shown as it is (011).
-    mode: state.showing === 'photo' ? PHOTO_MODE : state.engineId,
+    mode: state.showing === 'photo' ? PHOTO_MODE : CURRENT_ENGINE,
     payload: structuredClone({
       world: state.spaceWorld,
       controls: state.spaceControls,
@@ -34,7 +35,7 @@ export function jobFor(state: AppState, _kind: 'preview' | 'export', _W: number,
 export function startExport(controller: RenderController, state: AppState, onProgress: (f: number) => void): ExportHandle {
   const src = state.source;
   if (!src) throw new Error('写真がありません');
-  // The photo's shape, or the recipe's size (018).
+  // The photo's shape (018).
   const { width: W, height: H } = state.output;
   const { jobId, promise } = controller.submit({ kind: 'export', sourceId: src.id, W, H, ...jobFor(state, 'export', W, H) }, (d, t) => onProgress(d / t));
   const done = promise.then(async (r) => {

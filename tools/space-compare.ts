@@ -50,7 +50,7 @@ if (themeRange) console.log(`lasso range: ${themeRange.source}`);
 const records = [];
 for (let v = a; v <= b; v++) {
   const seeds = await deriveSpaceSeeds(buildSpaceSeedInput(hash, time, v));
-  const world = await composeWorld(seeds, features, controls, img, parts);
+  const world = await composeWorld(seeds, features, img, parts);
   const types: (WorldType | undefined)[] = onlyType ? [onlyType] : allTypes ? [...WORLD_TYPES].filter((t) => t !== 'split' || world.hasSubject) : [undefined];
   for (const type of types) {
     const t0 = performance.now();

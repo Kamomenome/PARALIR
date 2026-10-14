@@ -28,7 +28,6 @@ test('写真を入れると元の写真が出て、案内があり、保存は�
   await expect(page.getByTestId('photo-hint')).toBeVisible();
   await expect(page.getByTestId('photo-hint')).toContainText('元の写真です');
   await expect(page.getByTestId('export')).toBeDisabled();
-  await expect(page.getByTestId('recipe-save')).toBeDisabled();
 });
 
 test('「反映」で絵になる。スライダーでも絵になる（011 SC-1102, 017 FR-1705）', async ({ page }) => {
@@ -40,7 +39,7 @@ test('「反映」で絵になる。スライダーでも絵になる（011 SC-1
   await expect(page.getByTestId('export')).toBeEnabled();
   // A slider on a fresh photo shows the world too.
   await withPhoto(page);
-  await page.getByTestId('space-control-light').evaluate((el: HTMLInputElement) => {
+  await page.getByTestId('space-control-size').evaluate((el: HTMLInputElement) => {
     el.value = '0.8';
     el.dispatchEvent(new Event('input', { bubbles: true }));
   });

@@ -10,7 +10,7 @@ export const engine: Engine = {
   algorithms: SPACE_ALGORITHM_VERSIONS,
   worlds: WORLDS,
   seeds: deriveSpaceSeeds,
-  compose: (seeds: EngineSeeds, features, controls, img, parts) => composeWorld(seeds as SpaceSeeds, features, controls, img, parts),
+  compose: (seeds: EngineSeeds, features, img, parts) => composeWorld(seeds as SpaceSeeds, features, img, parts),
   render: (world: EngineWorld, img, features, controls, W, H, type, quality, parts, range) =>
     renderWorld(world as SpaceWorld, img, features, controls, W, H, (type ?? world.type) as WorldType, quality, parts ?? null, range ?? null),
 };

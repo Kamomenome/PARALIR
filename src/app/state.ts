@@ -3,8 +3,7 @@ import { pixelHash, type Hex64 } from '../engine/common/hash/sha256';
 import { snapshotNow, type TimeSnapshot } from '../engine/common/time/snapshot';
 import { lassoHints, lassoRange, type Lasso, type ThemeRange } from '../engine/common/parts/lasso';
 import type { PhotoParts } from '../engine/common/parts/types';
-import type { SpaceRecipe } from '../engine/recipe';
-import { CURRENT_ENGINE, loadEngine, type EngineSeeds, type EngineWorld } from '../engine/engines';
+import { ENGINE, type EngineSeeds, type EngineWorld } from '../engine/engines';
 import { buildSpaceSeedInput } from '../engine/space-v2/seeds';
 import { DEFAULT_SPACE_CONTROLS, type SpaceControls } from '../engine/space-v2/types';
 import type { LoadedSource } from './decode';
@@ -29,9 +28,7 @@ export interface AppState {
   previous: Step | null;
   /** The kind of the last change: a run of the same slider is one step (013 FR-1308). */
   lastStep: string | null;
-  /** The engine that composes and draws the work (009 FR-904): the current one, or a frozen one for an older recipe. */
-  engineId: string;
-  /** The export's size: the photo's shape (018 FR-1801), or a recipe's own size (FR-1804). */
+  /** The export's size: the photo's shape (018 FR-1801). */
   output: OutputSize;
   /** A new photo is shown as it is until the first action (011 FR-1101); the world is composed behind it all the same. */
   showing: 'photo' | 'world';
@@ -167,7 +164,6 @@ export function createInitialState(nowMs: number, timeZone: string): AppState {
     source: null,
     previous: null,
     lastStep: null,
-    engineId: CURRENT_ENGINE,
     output: { ...EXPORT_SIZE },
     showing: 'photo',
     spaceControls: { ...DEFAULT_SPACE_CONTROLS },
@@ -189,48 +185,24 @@ export async function reseed(s: AppState): Promise<AppState> {
   return composeSpaceState(s);
 }
 
-/** The seed and world for the current photo/time/variation, with the work's engine. */
+/** The seed and world for the current photo/time/variation. */
 async function composeSpaceState(s: AppState): Promise<AppState> {
   if (!s.source) return { ...s, spaceSeeds: null, spaceWorld: null, spaceParts: null };
   const spaceParts = await partsFor(s.source);
   const parts = spaceParts.status === 'ok' ? spaceParts.parts : null;
-  const engine = await loadEngine(s.engineId);
-  const spaceSeeds = await engine.seeds(buildSpaceSeedInput(s.source.pixelHash, s.time, s.variationIndex));
-  const spaceWorld = await engine.compose(spaceSeeds, s.source.features, s.spaceControls, s.source.loaded.img, parts);
+  const spaceSeeds = await ENGINE.seeds(buildSpaceSeedInput(s.source.pixelHash, s.time, s.variationIndex));
+  const spaceWorld = await ENGINE.compose(spaceSeeds, s.source.features, s.source.loaded.img, parts);
   return { ...s, spaceSeeds, spaceWorld, spaceParts };
 }
 
-/** Spatial sliders keep the composition; only the feature influence re-maps the odds (003 FR-309). */
-export async function setSpaceControls(s: AppState, patch: Partial<SpaceControls>): Promise<AppState> {
-  const spaceControls = { ...s.spaceControls, ...patch };
-  const next = { ...s, spaceControls, ...remember(s, `slider:${Object.keys(patch).sort().join(',')}`, true) };
-  if (patch.featureInfluence !== undefined && patch.featureInfluence !== s.spaceControls.featureInfluence) {
-    return composeSpaceState(next);
-  }
-  return next;
+/** Sliders keep the composition (003 FR-309). */
+export function setSpaceControls(s: AppState, patch: Partial<SpaceControls>): AppState {
+  return { ...s, spaceControls: { ...s.spaceControls, ...patch }, ...remember(s, `slider:${Object.keys(patch).sort().join(',')}`, true) };
 }
 
 /** Fixing (or releasing) the world type re-renders without recomposing (FR-310). */
 export function setSpaceType(s: AppState, spaceType: string): AppState {
   return { ...s, spaceType, ...remember(s, 'type') };
-}
-
-/** Applies a checked recipe with the engine its versions belong to (009 FR-905). */
-export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: string = CURRENT_ENGINE): Promise<AppState> {
-  const next = await reseed({
-    ...s,
-    engineId,
-    showing: 'world',
-    // The recipe's own size, so works of 4:3 days come back as they were (018 FR-1804).
-    output: { width: r.output.width, height: r.output.height },
-    time: { ...r.time, resolution: 'exact' },
-    variationIndex: r.variationIndex,
-    spaceControls: { ...r.controls },
-    spaceType: r.worldType,
-    ...remember(s, 'recipe'),
-  });
-  // Several lassos since 013B; one `lasso` in older recipes.
-  return applyLassos(next, r.lassos ?? (r.lasso ? [r.lasso] : []));
 }
 
 /**
@@ -239,12 +211,12 @@ export async function applySpaceRecipe(s: AppState, r: SpaceRecipe, engineId: st
  */
 export function withPhoto(s: AppState, source: SourceState, time: TimeSnapshot = s.time): AppState {
   // The artwork time is when the photo goes in (016 FR-1601); the picture takes the photo's shape (018 FR-1801).
-  return { ...s, source, time, output: outputSize(source.loaded.img.width / source.loaded.img.height), engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
+  return { ...s, source, time, output: outputSize(source.loaded.img.width / source.loaded.img.height), showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null, spaceSeeds: null, spaceWorld: null, spaceParts: null };
 }
 
-/** A new photo starts a new work with the current engine: the one-step history is cleared. */
+/** A new photo starts a new work: the one-step history is cleared. */
 export async function withSource(s: AppState, source: SourceState): Promise<AppState> {
-  return reseed({ ...s, source, engineId: CURRENT_ENGINE, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null });
+  return reseed({ ...s, source, showing: 'photo', previous: null, lastStep: null, spaceLassos: [], spaceRange: null });
 }
 
 /** Seed-changing transition that remembers where it came from. */
@@ -263,8 +235,8 @@ export async function firstLook(s: AppState, fn: (s: AppState) => AppState | Pro
 }
 
 /**
- * No おまかせ (013B FR-1311): a work still drawing the seed's choice ('auto', the first photo or an old recipe) settles on
- * that mode, so it is the one selected and 写真に合わせる強さ never swaps it. Not a step to undo.
+ * No おまかせ (013B FR-1311): a work still drawing the seed's choice ('auto', the first photo) settles on that mode, so
+ * it is the one selected. Not a step to undo.
  */
 export function settleMode(s: AppState): AppState {
   return s.spaceType === 'auto' && s.spaceWorld ? { ...s, spaceType: s.spaceWorld.type } : s;
@@ -275,7 +247,7 @@ export function showPhoto(s: AppState): AppState {
   return { ...s, showing: 'photo' };
 }
 
-/** The next variation of the same photo and time (R04). No button since 013; old recipes and the pixel records use variations. */
+/** The next variation of the same photo and time (R04). No button since 013; the pixel records use variations. */
 export function nextWorld(s: AppState): Promise<AppState> {
   return changeSeed(s, { variationIndex: s.variationIndex + 1 });
 }

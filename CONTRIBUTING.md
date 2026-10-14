@@ -32,8 +32,7 @@ src/
       shared/          世界どうしで共有：光・カメラ・HDR・炎・色・背景
       worlds/<名前>/   世界 1 つ分（index.ts に名前・出やすさ・組み立て・描き方）
       p9/              気に入った Phase 9 の絵を再現するための凍結したコード（変えない）
-    engines.ts         エンジンの一覧（凍結した古い版は、古いレシピのときだけ読み込む）
-    recipe.ts          レシピの形と検証
+    engines.ts         エンジンの形と、今のエンジン（描き方は 1 つだけ、020）
   app/                 状態・Worker の管理・写真の読み込み・書き出し・外への通信の遮断
   worker/              描画の Worker（protocol.ts がやりとりの型）
   ai/                  端末内の AI（MediaPipe）
@@ -45,17 +44,14 @@ src/
 1. `src/engine/space-v2/worlds/<名前>/` を作り、`index.ts` に `WorldDef`（`type`・`label`・`note`・`version`・`odds`・`build`・`render`）を書く
 2. `src/engine/space-v2/worlds/index.ts` の `WORLDS` の**最後に** 1 行足す（途中に入れると、おまかせのくじの順が変わって既存の絵が変わる）
 3. `npx tsx tools/world-hashes.ts` で画素の記録を作り直し、既存の世界の記録が変わっていないことを差分で確かめる
-4. 版の組が変わるので、既存のレシピのために、先に「描き方の版を上げる」の 1〜3 を行う
 
 ## 描き方の版を上げる（絵が変わる直しをするとき）
 
-保存したレシピが、いつでも同じ絵で開けるようにするための手順です（[docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)）。
+同じ写真・作品日時・設定から同じ絵になる約束（[docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md)）を、わざと変えるときの手順です。
+レシピはない（020）ので、古い描き方を残す（凍結する）必要はありません。
 
-1. 今のエンジンを凍結する: `src/engine/space-v2/` を `src/engine/frozen/<id>/`（例 `space-v2-1`）へ丸ごと写す（import のパスは写した先に合わせる）
-2. `src/engine/engines.ts` の一覧に、写したエンジンを `load: () => import('./frozen/<id>').then((m) => m.engine)` で足す（id は写した先の名前）
-3. 写したエンジンの画素の記録を、今の記録と同じものとして残す（凍結したエンジンが同じ絵を描くことの確認）
-4. `space-v2/` の中で直し、変わる世界の `version`（背景なら `ATMOSPHERE_VERSION`）を上げる
-5. `npx tsx tools/world-hashes.ts` で記録し直す。変えるつもりのない世界の記録が変わっていたら、直しが広がりすぎている
+1. `space-v2/` の中で直し、変わる世界の `version`（背景なら `ATMOSPHERE_VERSION`）を上げる
+2. `npx tsx tools/world-hashes.ts` で記録し直す。変えるつもりのない世界の記録が変わっていたら、直しが広がりすぎている
 
 ## 公開
 

@@ -40,13 +40,4 @@ test('3:2 の写真は 3:2 のまま。元の写真は切れず、書き出し�
   await page.getByTestId('export').click();
   const png = PNG.sync.read(readFileSync((await (await download).path())!));
   expect([png.width, png.height]).toEqual([2400, 1600]);
-
-  // A recipe saved at 2400×1800 (ver 1.32 and before) is drawn at its own size.
-  const recipe = page.waitForEvent('download');
-  await page.getByTestId('recipe-save').click();
-  const saved = JSON.parse(readFileSync((await (await recipe).path())!, 'utf8'));
-  saved.output.height = 1800;
-  await page.setInputFiles('[data-testid="recipe-input"]', { name: 'old.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(saved)) });
-  await expect(page.getByTestId('recipe-status')).toContainText('読み込みました');
-  await expect(page.getByTestId('export')).toHaveText('画像を書き出す（2400×1800）');
 });

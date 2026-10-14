@@ -8,7 +8,7 @@ export const copies: WorldDef<'copies', CopiesParams> = {
   label: '物の複製',
   note: '主役を環・扇・列・格子・螺旋に並べる',
   version: 'copies-v5',
-  controls: ['light', 'lightShape', 'size', 'darkness'],
+  controls: ['lightShape', 'size'],
   shapeOf: (w) => w.atmosphere.shape,
   usesRange: true,
   odds: () => 1.0,
@@ -18,6 +18,6 @@ export const copies: WorldDef<'copies', CopiesParams> = {
     const layer = copiesLayer(x.world.copies, x.obj, x.img, x.world.camera, x.controls, x.W, x.H);
     dimPlates(layer, x.W * x.H);
     mergeFront(hdr, layer, light, look);
-    return { rgba: finish(hdr, x.controls, true), objects: layer.a };
+    return { rgba: finish(hdr, true), objects: layer.a };
   },
 };

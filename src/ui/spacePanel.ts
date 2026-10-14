@@ -6,11 +6,11 @@ import { WORLDS, worldOf } from '../engine/space-v2/worlds';
 import { h } from './layout';
 
 /**
- * The sliders under 背景・主役 (017 FR-1709), with plain names (FR-1704). 光の形 since 019 (FR-1907); 写真に合わせる強さ
- * left the screen (FR-1911), and with it 全体.
+ * The sliders under 背景・主役 (017 FR-1709), with plain names (FR-1704). 光の形 since 019 (FR-1907); 写真に合わせる強さ,
+ * 光の強さ and 背景の暗さ went in 020 (FR-2003).
  */
 const GROUPS: [string, [keyof SpaceControls, string][]][] = [
-  ['背景', [['light', '光の強さ'], ['lightShape', '光の形'], ['darkness', '背景の暗さ']]],
+  ['背景', [['lightShape', '光の形']]],
   ['主役', [['size', '主役の大きさ'], ['count', '長方形の数']]],
 ];
 
@@ -26,11 +26,8 @@ export interface SpacePanel {
   captionItems: HTMLElement[];
   /** What the AI saw, in 技術的な表示 (016 FR-1604). */
   partsLine: HTMLElement;
-  /**
-   * `seeded` is the seed's own choice; the split world needs a subject. `light`: the work drawn by the current engine, where
-   * 光の形 starts at its drawn shape (019 FR-1908); a frozen engine's work has no 光の形 (FR-1910).
-   */
-  show(c: SpaceControls, type: string, visible: boolean, seeded: string | null, hasSubject: boolean, light?: { world: SpaceWorld | null; current: boolean }): void;
+  /** `seeded` is the seed's own choice; the split world needs a subject. 光の形 starts at the world's drawn shape (019 FR-1908). */
+  show(c: SpaceControls, type: string, visible: boolean, seeded: string | null, hasSubject: boolean, world?: SpaceWorld | null): void;
   onSlider(fn: (patch: Partial<SpaceControls>) => void): void;
   onType(fn: (t: string) => void): void;
   /** What the AI saw in the photo (004); null while it is still looking. */
@@ -110,18 +107,16 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
     captionItems: [lassoText, lassoOutline, lassoClear],
     partsLine: parts,
     lassoWorks: () => lassoUsed,
-    show(c, type, visible, seeded, hasSubject, light = { world: null, current: true }) {
+    show(c, type, visible, seeded, hasSubject, world = null) {
       root.hidden = !visible;
       // Before any photo (or while it settles) the seed's mode, if any, is the one shown.
       const shownType = type === 'auto' ? (seeded ?? TYPES[0][0]) : type;
       const chosen = TYPES.find(([v]) => v === shownType);
       note.textContent = chosen ? chosen[2] : '';
-      // A frozen engine's world that is no longer offered still shows its name (017).
-      if (![...select.options].some((o) => o.value === shownType)) select.append(h('option', { value: shownType }, `${shownType}（以前の版）`));
       select.value = shownType;
       // Only the sliders that change this template (017 FR-1704), under their headings (FR-1709).
       const def = worldOf(type === 'auto' ? (seeded ?? '') : type);
-      const works = (k: keyof SpaceControls) => (k !== 'lightShape' || light.current) && (!def || (def.controls as readonly string[]).includes(k));
+      const works = (k: keyof SpaceControls) => !def || (def.controls as readonly string[]).includes(k);
       for (const [key, row] of rowsOf) row.hidden = !works(key);
       for (const g of groups) g.el.hidden = !g.keys.some(works);
       // The lasso works only where its range is used (FR-1706).
@@ -135,7 +130,7 @@ export function buildSpacePanel(actions: HTMLElement): SpacePanel {
         if (option) option.disabled = !!w.needsSubject && !hasSubject;
       }
       // 光の形 starts at the shape drawn from the photo until it is moved (019 FR-1908).
-      const drawn = light.world && def?.shapeOf ? (def.shapeOf(light.world).kind === 'ring' ? 0 : 1) : 0;
+      const drawn = world && def?.shapeOf ? (def.shapeOf(world).kind === 'ring' ? 0 : 1) : 0;
       for (const [key, { input, out }] of sliders) {
         const v = c[key] ?? drawn;
         input.value = String(v);

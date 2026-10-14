@@ -8,7 +8,7 @@ import { previewHash, previewVariety, waitForPreview, showWorld } from './helper
 test.use({ timezoneId: 'Asia/Tokyo' });
 test.beforeEach(async ({ page }) => page.clock.setFixedTime(new Date('2026-10-11T03:00:00Z')));
 
-test('空間モード（space-v2）: 世界・固定とおまかせ・スライダー・別の世界・書き出し・レシピ・外部通信 0 件（003）', async ({ page, baseURL }) => {
+test('空間モード（space-v2）: 世界・固定とおまかせ・スライダー・別の世界・書き出し・外部通信 0 件（003）', async ({ page, baseURL }) => {
   test.setTimeout(300_000);
   const origin = new URL(baseURL!).origin;
   const external: string[] = [];
@@ -38,14 +38,14 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(auto);
 
-  // A slider changes the picture without changing the world (in a template the darkness slider works in, 017).
+  // A slider changes the picture without changing the world (in a mode 主役の大きさ works in, 017).
   await page.getByTestId('space-world').selectOption('copies');
   await waitForPreview(page);
   const copies = await previewHash(page);
-  await page.getByTestId('space-control-darkness').fill('0.95');
+  await page.getByTestId('space-control-size').fill('0.95');
   await waitForPreview(page);
   expect(await previewHash(page)).not.toBe(copies);
-  await page.getByTestId('space-control-darkness').fill('0.5');
+  await page.getByTestId('space-control-size').fill('0.5');
   await waitForPreview(page);
   expect(await previewHash(page)).toBe(copies);
   await page.getByTestId('space-world').selectOption(drawn);
@@ -64,12 +64,6 @@ test('空間モード（space-v2）: 世界・固定とおまかせ・スライ�
   await page.getByTestId('export').click();
   const png = PNG.sync.read(readFileSync((await (await download).path())!));
   expect([png.width, png.height]).toEqual([2400, 1800]);
-
-  const recipe = page.waitForEvent('download');
-  await page.getByTestId('recipe-save').click();
-  const saved = JSON.parse(readFileSync((await (await recipe).path())!, 'utf8'));
-  expect(saved.engineVersion).toBe('space-v2');
-  expect(saved.worldType).toBe(drawn);
 
   expect(external).toEqual([]);
 });

@@ -32,7 +32,7 @@ export interface SpacePipeline {
   merge: MergeAlgo;
 }
 
-/** What the screen (and the recipe) holds for each part: 'auto' = the seed's choice. */
+/** What the screen holds for each part: 'auto' = the seed's choice. */
 export interface PipelineChoice {
   background: BackgroundAlgo | 'auto';
   foreground: ForegroundAlgo | 'auto';

@@ -19,7 +19,7 @@ export async function spaceWorld(img: RgbImage, opts: { variation?: number; cont
   const features = analyze(img);
   const seeds = await deriveSpaceSeeds(buildSpaceSeedInput(await pixelHash(img), TEST_TIME, opts.variation ?? 0));
   const controls = { ...DEFAULT_SPACE_CONTROLS, ...opts.controls };
-  const world = await composeWorld(seeds, features, controls, img);
+  const world = await composeWorld(seeds, features, img);
   return { img, features, seeds, controls, world };
 }
 

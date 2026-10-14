@@ -62,8 +62,8 @@ const deadExports: string[] = [];
 const testOnly: string[] = [];
 /** Exported but used only inside its own file: the code is needed, only the `export` is extra. Not a finding. */
 let internalOnly = 0;
-// A file allowed as a whole keeps all its exports; a frozen engine stays exactly as it was frozen (017).
-for (const f of src.filter((x) => !deadFiles.includes(x) && !allow[x] && !x.startsWith('src/engine/frozen/'))) {
+// A file allowed as a whole keeps all its exports.
+for (const f of src.filter((x) => !deadFiles.includes(x) && !allow[x])) {
   for (const name of exportsOf(f)) {
     const key = `${f}#${name}`;
     if (allow[key] || usedBy(appImports, f, name)) continue;

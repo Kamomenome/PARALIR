@@ -14,20 +14,20 @@ describe('ひとつ戻す undoes the last change (013 FR-1308, SC-1306)', () => 
 
   it('a slider: back to the value before; a run of the same slider is one step', async () => {
     const s = await photo();
-    const a = await setSpaceControls(s, { light: 0.6 });
-    const b = await setSpaceControls(a, { light: 0.7 });
-    const c = await setSpaceControls(b, { light: 0.8 });
+    const a = await setSpaceControls(s, { count: 0.6 });
+    const b = await setSpaceControls(a, { count: 0.7 });
+    const c = await setSpaceControls(b, { count: 0.8 });
     const back = await restorePrevious(c);
-    expect(back.spaceControls.light).toBe(s.spaceControls.light);
+    expect(back.spaceControls.count).toBe(s.spaceControls.count);
     expect(back.previous).toBeNull();
   });
 
   it('another slider after one is its own step', async () => {
     const s = await photo();
-    const a = await setSpaceControls(s, { light: 0.9 });
+    const a = await setSpaceControls(s, { count: 0.9 });
     const b = await setSpaceControls(a, { size: 0.1 });
     const back = await restorePrevious(b);
-    expect(back.spaceControls).toEqual({ ...s.spaceControls, light: 0.9 });
+    expect(back.spaceControls).toEqual({ ...s.spaceControls, count: 0.9 });
   });
 
   it('the world fixed on screen and the lasso', async () => {

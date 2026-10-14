@@ -1,6 +1,6 @@
 import type { RgbImage } from '../engine/common/image/normalize';
 import type { FromWorker, ToWorker } from './protocol';
-import { getRenderer, loadRenderer, type Renderer } from './renderers';
+import { getRenderer, type Renderer } from './renderers';
 
 type RenderMessage = Extract<ToWorker, { type: 'render' }>;
 
@@ -42,12 +42,7 @@ export function createHandler(post: (msg: FromWorker, transfer?: Transferable[])
       case 'render': {
         if (cancelled.has(msg.jobId)) return;
         const renderer = getRenderer(msg.mode);
-        if (renderer) return draw(msg, renderer);
-        loadRenderer(msg.mode).then(
-          (r) => (r ? draw(msg, r) : fail(msg.jobId, new Error(`unknown mode ${msg.mode}`))),
-          (e) => fail(msg.jobId, e),
-        );
-        return;
+        return renderer ? draw(msg, renderer) : fail(msg.jobId, new Error(`unknown mode ${msg.mode}`));
       }
     }
   };

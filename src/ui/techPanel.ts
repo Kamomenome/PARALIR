@@ -1,5 +1,5 @@
 import type { AppState } from '../app/state';
-import { engineEntry } from '../engine/engines';
+import { ENGINE } from '../engine/engines';
 import { formatOffset } from '../engine/common/time/snapshot';
 import { h } from './layout';
 
@@ -46,14 +46,13 @@ export function buildTechPanel(partsLine: HTMLElement): TechPanel {
     onShowParts: (f) => fns.push(f),
     show(s) {
       const t = s.time;
-      const entry = engineEntry(s.engineId);
       const range = s.spaceRange ? (s.spaceRange.source === 'lasso+ai' ? 'AI が認識した輪郭' : '囲んだ形のまま') : 'なし（推定の範囲）';
       lines.replaceChildren(
         ...row('作品日時', `${t.localDateTime.replace('T', ' ')}　${t.timeZone}（UTC${formatOffset(t.offsetMinutes)}）`),
         ...row('seed', s.spaceSeeds ? `${s.spaceSeeds.rootSeed.slice(0, 16)}…` : '—'),
         ...row('おまかせの世界', s.spaceWorld?.type ?? '—'),
         ...row('囲みの範囲', range),
-        ...row('描き方の版', entry ? `${entry.id}（${Object.values(entry.algorithms).join('・')}）` : s.engineId),
+        ...row('描き方の版', `${ENGINE.id}（${Object.values(ENGINE.algorithms).join('・')}）`),
       );
     },
   };

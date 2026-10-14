@@ -1,8 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { applySpaceRecipe, createInitialState, prepareSource, setLasso, setSpaceType, withSource, type AppState } from '../../src/app/state';
-import { checkRecipe } from '../../src/app/recipeLoad';
-import { parseSpaceRecipe, toSpaceRecipe } from '../../src/engine/recipe';
+import { createInitialState, prepareSource, setLasso, withSource, type AppState } from '../../src/app/state';
 import { SPACE_ALGORITHM_VERSIONS } from '../../src/engine/space-v2/versions';
 import { renderWorld, type SpaceWorld } from '../../src/engine/space-v2/world';
 import { readPngRgb } from '../helpers/png';
@@ -45,20 +43,5 @@ describe('several lassos with Shift (013B FR-1310, SC-1307)', () => {
     const replaced = await setLasso(both, right);
     expect(replaced.spaceLassos).toHaveLength(1);
     expect((await setLasso(both, null)).spaceLassos).toHaveLength(0);
-  });
-
-  it('a recipe keeps every lasso and opens with them; a recipe with one lasso still opens', async () => {
-    const { src, s } = await photo();
-    const both = await setLasso(await setLasso(setSpaceType(s, 'mosaic'), left), right, true);
-    const r = toSpaceRecipe(both);
-    expect(r.lassos).toHaveLength(2);
-    const check = await checkRecipe(JSON.stringify(r), src);
-    expect(check.ok).toBe(true);
-    if (check.ok) expect((await applySpaceRecipe(s, check.recipe, check.engineId)).spaceLassos).toHaveLength(2);
-    // ver 1.32 and before: one `lasso`.
-    const old = JSON.parse(JSON.stringify(r));
-    delete old.lassos;
-    old.lasso = left;
-    expect(parseSpaceRecipe(JSON.stringify(old)).ok).toBe(true);
   });
 });

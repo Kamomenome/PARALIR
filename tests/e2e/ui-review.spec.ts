@@ -49,7 +49,6 @@ test('写真の入れ方: 選ぶ前は「写真を選ぶ」、ドロップで入
   await expect(page.getByTestId('drop')).toBeVisible();
   await expect(page.getByTestId('drop')).toContainText('写真を選ぶ');
   await expect(page.getByTestId('file-input')).toBeHidden();
-  await expect(page.getByTestId('recipe-input')).toBeHidden();
   await expect(page.getByTestId('change-photo')).toBeHidden();
 
   const b64 = readFileSync(PHOTO).toString('base64');
@@ -69,17 +68,16 @@ test('写真の入れ方: 選ぶ前は「写真を選ぶ」、ドロップで入
   await expect(page.getByText('dropped.png')).toHaveCount(1);
 });
 
-test('パネルの順番: 世界 → ひとつ戻す → スライダー → 書き出し → レシピの読み込み。詳しい設定の折りたたみはない（007 SC-703, 019 SC-1906）', async ({ page }) => {
+test('パネルの順番: 世界 → ひとつ戻す → スライダー → 書き出し → 技術的な表示 → このアプリについて。詳しい設定の折りたたみはない（007 SC-703, 019 SC-1906）', async ({ page }) => {
   await withPhoto(page);
   const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
-  // The first slider the mode shows (写真に合わせる強さ, once in every mode, left the screen in 019).
+  // The first slider the mode shows.
   const slider = (await page.locator('[data-testid^="space-control-"]:visible').first().boundingBox())!.y;
-  const order = [await y('space-world'), await y('restore-previous'), slider, await y('export'), await y('recipe-load'), await y('tech'), await y('about')];
+  const order = [await y('space-world'), await y('restore-previous'), slider, await y('export'), await y('tech'), await y('about')];
   expect([...order].sort((a, b) => a - b)).toEqual(order);
   // Not folded away (019 FR-1913): the items are there as they are; 技術的な表示 and このアプリについて open by their headings.
   await expect(page.getByTestId('details')).toHaveCount(0);
   await expect(page.getByText('詳しい設定')).toHaveCount(0);
-  await expect(page.getByTestId('recipe-load')).toBeVisible();
   for (const id of ['tech', 'about']) await expect(page.getByTestId(id)).toHaveJSProperty('open', false);
   // The artwork time is no longer set on screen (016 FR-1601).
   await expect(page.getByTestId('time-input')).toHaveCount(0);
@@ -109,7 +107,7 @@ test('画面の部品は無彩色、控えめな文字も読める（007 SC-705�
     const [r, g, b] = rgb(c);
     return r === g && g === b;
   };
-  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['restore-previous', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-light', 'accent-color']] as const) {
+  for (const [id, prop] of [['stage', 'background-color'], ['panel', 'background-color'], ['restore-previous', 'background-color'], ['export', 'background-color'], ['export', 'border-top-color'], ['space-control-size', 'accent-color']] as const) {
     const c = await css(page, id, prop);
     expect(grey(c), `${id} ${prop} ${c}`).toBe(true);
   }
@@ -127,7 +125,7 @@ test('手応え: バーは描いている間だけ、絵の上は十字、キャ
 
 test('キーボード: Ctrl+Z でひとつ戻す、選択枠が見える（007 SC-707, 013）', async ({ page }) => {
   await withPhoto(page);
-  const slider = page.getByTestId('space-control-light');
+  const slider = page.getByTestId('space-control-size');
   await slider.evaluate((el: HTMLInputElement) => {
     el.value = '0.9';
     el.dispatchEvent(new Event('input', { bubbles: true }));

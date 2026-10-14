@@ -29,14 +29,3 @@ test('PARALIR: 名前と版（010 SC-1001）、開いたら空間モードだけ
   await page.getByTestId('export').click();
   expect((await download).suggestedFilename()).toMatch(/^paralir-.*\.png$/);
 });
-
-test('以前のモードのレシピは理由を出して読まない（006 SC-603）', async ({ page }) => {
-  await page.goto('/?ai=off');
-  await page.setInputFiles('[data-testid="file-input"]', 'tests/fixtures/images/scene.png');
-  await waitForPreview(page);
-  for (const engineVersion of ['world-v3', 'reference-v1', 'space-v1']) {
-    const recipe = { schemaVersion: 1, engineVersion, variationIndex: 0 };
-    await page.setInputFiles('[data-testid="recipe-input"]', { name: `${engineVersion}.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(recipe)) });
-    await expect(page.getByTestId('recipe-status'), engineVersion).toContainText('以前のモードの作品です');
-  }
-});

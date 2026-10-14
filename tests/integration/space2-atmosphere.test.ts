@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { ATMOSPHERES, LIGHT_SHAPES, lightShape, renderAtmosphere } from '../../src/engine/space-v2/shared/atmosphere';
-import { DEFAULT_SPACE_CONTROLS } from '../../src/engine/space-v2/types';
 import { renderBackgroundOnly } from '../../src/engine/space-v2/world';
 import { Hdr, tonemap } from '../../src/engine/space-v2/shared/hdr';
 import { solid } from '../helpers/images';
@@ -56,7 +55,7 @@ describe('the 002 Phase 9 background (003 FR-314, SC-313)', () => {
       const w = await spaceWorld(photo, { variation });
       for (const shape of LIGHT_SHAPES) {
       const a = { ...w.world.atmosphere, kind, shape: { ...w.world.atmosphere.shape, kind: shape } };
-      const y = luminance(renderBackgroundOnly(a, photo, DEFAULT_SPACE_CONTROLS, W, H));
+      const y = luminance(renderBackgroundOnly(a, photo, W, H));
       const median = quantile(y, 0.5);
       const [vx, vy] = a.layout.voidCenter;
       const ci = Math.round(120 + vy * 120);

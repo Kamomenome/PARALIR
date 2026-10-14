@@ -154,7 +154,6 @@ button.link:hover:not(:disabled) { color: var(--ink); }
 .actions .row button.key { flex: 1; padding: 6px 12px; font-size: 14px; }
 .output { gap: 6px; }
 .output > .row:empty, .output > :empty { display: none; }
-.recipe-load, .time-controls { display: flex; flex-direction: column; gap: 6px; }
 
 .muted { color: var(--muted); font-size: 12px; }
 .note { font-size: 12px; color: var(--muted); }
@@ -206,7 +205,7 @@ select, input[type='datetime-local'] {
 .slider input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--ink); }
 .slider output { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-/* Recipe loading, 技術的な表示 and このアプリについて, not folded away (019 FR-1913). */
+/* 技術的な表示 and このアプリについて, not folded away (019 FR-1913). */
 .more summary { cursor: pointer; line-height: 1.6; }
 .more details[open] summary { margin-bottom: 8px; }
 .more > * + * { margin-top: 4px; }
@@ -226,4 +225,3 @@ select, input[type='datetime-local'] {
   * { transition-duration: 0s !important; }
   .spinner { animation: none; }
 }
-.recipe-load button, .time-controls button { align-self: flex-start; }

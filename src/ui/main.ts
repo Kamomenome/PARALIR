@@ -5,7 +5,6 @@ import { blockExternalRequests } from '../app/offline';
 import { createInitialState, firstLook, restorePrevious, showPhoto, setLasso, setSpaceControls, setSpaceType, type AppState } from '../app/state';
 import { chooseWorkers, createInlineWorker } from '../app/workers';
 import { systemTimeZone } from '../engine/common/time/snapshot';
-import { CURRENT_ENGINE } from '../engine/engines';
 import type { SpaceWorld } from '../engine/space-v2/world';
 import { buildAbout } from './about';
 import { createBusy } from './busy';
@@ -18,8 +17,6 @@ import { wireLasso } from './lassoInput';
 import { buildLayout, h, showMessage } from './layout';
 import { wirePhotoInput } from './photoInput';
 import { previewer } from './preview';
-import { buildRecipePanel } from './recipePanel';
-import { wireRecipes } from './recipeActions';
 import { buildSpacePanel } from './spacePanel';
 import { buildTechPanel } from './techPanel';
 import { partsOverlay } from './partsOverlay';
@@ -31,15 +28,14 @@ useOnDeviceAi();
 const ui = buildLayout(document.getElementById('app')!);
 let state: AppState = createInitialState(Date.now(), systemTimeZone());
 
-// The panel, top to bottom in the order of use (007 FR-703); the artwork time and recipe loading are folded away.
+// The panel, top to bottom in the order of use (007 FR-703).
 const controls = buildControls();
 const exportPanel = buildExportPanel();
-const recipePanel = buildRecipePanel();
 const spacePanel = buildSpacePanel(controls.root);
 const tech = buildTechPanel(spacePanel.partsLine);
 // Not folded away under 詳しい設定 (019 FR-1913): the items as they are; 技術的な表示 and このアプリについて open by their headings.
-const more = h('div', { class: 'group more' }, recipePanel.loadRoot, tech.root, buildAbout());
-ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, h('div', { class: 'row' }, exportPanel.root, recipePanel.saveRoot), exportPanel.status, recipePanel.status), more);
+const more = h('div', { class: 'group more' }, tech.root, buildAbout());
+ui.panel.append(spacePanel.root, h('div', { class: 'group output' }, exportPanel.root, exportPanel.status), more);
 const photoHint = h('span', { class: 'note', 'data-testid': 'photo-hint', hidden: '' }, '元の写真です。「反映」を押すか、設定を変えると絵になります');
 ui.caption.append(photoHint, ...spacePanel.captionItems);
 
@@ -98,16 +94,12 @@ function refreshPanel() {
   tech.show(state);
   overlay.draw(state);
   controls.show(state.previous !== null, state.source !== null, state.showing);
-  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true, {
-    world: state.engineId === CURRENT_ENGINE ? (state.spaceWorld as SpaceWorld | null) : null,
-    current: state.engineId === CURRENT_ENGINE,
-  });
+  spacePanel.show(state.spaceControls, state.spaceType, true, state.spaceWorld?.type ?? null, state.spaceWorld?.hasSubject ?? true, state.spaceWorld as SpaceWorld | null);
   spacePanel.showParts(state.source ? state.spaceParts : null);
   spacePanel.showLasso(state.spaceRange, state.showing);
   lasso.draw(state);
-  // Saving and exporting only once the world is on screen (011 FR-1103).
+  // Exporting only once the world is on screen (011 FR-1103).
   const world = state.showing === 'world';
-  recipePanel.setSaveEnabled(state.spaceWorld !== null && world);
   ui.canvas.dataset.showing = state.showing;
   photoHint.hidden = !state.source || world;
   // Until there is a photo the picture's place asks for one (007 FR-702).
@@ -139,7 +131,6 @@ document.addEventListener('keydown', (e) => {
   if (action === 'restore' && state.previous) ctx.update(restorePrevious);
 });
 wireExport(ctx, exportPanel);
-wireRecipes(ctx, recipePanel);
 wirePhotoInput(ctx);
 
 refreshPanel();

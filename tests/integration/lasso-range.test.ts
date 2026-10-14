@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { createInitialState, prepareSource, reseed, setLasso, usePartsProvider, withSource } from '../../src/app/state';
+import { createInitialState, prepareSource, setLasso, usePartsProvider, withSource } from '../../src/app/state';
 import { lassoRange, type Lasso } from '../../src/engine/common/parts/lasso';
 import type { PhotoParts } from '../../src/engine/common/parts/types';
-import { CURRENT_ENGINE } from '../../src/engine/engines';
 import { renderWorld, type SpaceWorld } from '../../src/engine/space-v2/world';
 import { mosaicLayout, type MosaicParams } from '../../src/engine/space-v2/worlds/mosaic/mosaic';
 import { rangeObject } from '../../src/engine/space-v2/shared/object';
@@ -30,13 +29,12 @@ describe('the range from a lasso is the AI candidate whole, as loose as it is (0
     expect(at(range.mask, 105, 65)).toBeGreaterThan(127);
   });
 
-  it('the same in the current engine and in the frozen ones', async () => {
+  it('the same through the app, with the AI', async () => {
     usePartsProvider(async () => ({ status: 'ok', parts, ms: 0 }));
     const img = readPngRgb('tests/fixtures/images/scene.png');
     const src = await prepareSource(1, { name: 'scene.png', img, fileSha256: 'b'.repeat(64) as any, fileBytes: 1, hadTransparency: false });
     const s = await withSource(createInitialState(Date.UTC(2026, 9, 11, 3), 'Asia/Tokyo'), src);
-    expect(s.engineId).toBe(CURRENT_ENGINE);
-    for (const t of [s, await reseed({ ...s, engineId: 'space-v2-4' })]) expect(at((await setLasso(t, loop)).spaceRange!.mask, 105, 65), t.engineId).toBeGreaterThan(127);
+    expect(at((await setLasso(s, loop)).spaceRange!.mask, 105, 65)).toBeGreaterThan(127);
   });
 });
 

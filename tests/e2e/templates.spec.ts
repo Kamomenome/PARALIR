@@ -12,7 +12,7 @@ async function withPhoto(page: Page) {
 
 const shown = async (page: Page) => {
   const out: string[] = [];
-  for (const k of ['light', 'lightShape', 'size', 'count', 'darkness', 'featureInfluence']) if (await page.getByTestId(`space-control-${k}`).isVisible()) out.push(k);
+  for (const k of ['lightShape', 'size', 'count']) if (await page.getByTestId(`space-control-${k}`).isVisible()) out.push(k);
   return out;
 };
 
@@ -34,7 +34,7 @@ test('テンプレートで効くスライダーと囲みだけが出る（017 F
   await withPhoto(page);
   await page.getByTestId('space-world').selectOption('copies');
   await waitForPreview(page);
-  expect(await shown(page)).toEqual(['light', 'lightShape', 'size', 'darkness']);
+  expect(await shown(page)).toEqual(['lightShape', 'size']);
   // The lasso decides the subject in every template since 013B (FR-1309).
   await expect(page.getByTestId('lasso-status')).toBeVisible();
   await page.getByTestId('space-world').selectOption('mosaic');

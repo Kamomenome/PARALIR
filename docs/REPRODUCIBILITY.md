@@ -1,7 +1,8 @@
 # 再現の約束（同じ写真・日時・設定から同じ絵）
 
-PARALIR の絵は、写真の画素・作品日時・別案番号から決まる乱数で作る。ここに書いた計算を変えると、保存したレシピが同じ絵にならなくなる。
-変えるときはエンジンを凍結してから版を上げる（[CONTRIBUTING.md](../CONTRIBUTING.md)）。
+PARALIR の絵は、写真の画素・作品日時・別案番号から決まる乱数で作る。同じ条件なら常に同じ絵になる（共鳴パターン化）。
+ここに書いた計算を変えると、同じ条件でも別の絵になる。変えるときは版を上げ、画素の記録を記録し直す（[CONTRIBUTING.md](../CONTRIBUTING.md)）。
+レシピ（設定の保存と読み込み）は 020 で削除した。
 
 > 2026-10-13（009）: 旧 `docs/SPEC.md`（001 の仕様）から、今も使っている部分（§3.2〜3.3・§4・§6・§7 の一部）をここへ移した。
 > 旧資料は削除した（git の履歴に残る）。
@@ -83,5 +84,4 @@ HSV は max/min の標準の定義（Δ = 0 なら Hue = 0, S = 0。max = 0 で�
 
 ## 8. 守り
 
-- 画素のハッシュで固定したテスト: Phase 9 の 16 枚（`tests/fixtures/phase9-hashes.json`）、7 つの世界の 43 枚（`tests/fixtures/world-hashes.json`）
-- レシピの形: `specs/003-space-worlds/contracts/space-v2-recipe.schema.json`
+- 画素のハッシュで固定したテスト: Phase 9 の 16 枚（`tests/fixtures/phase9-hashes.json`）、5 つの世界の 35 枚（`tests/fixtures/world-hashes.json`）
