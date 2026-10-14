@@ -168,11 +168,11 @@ export function wilderMosaic(p: MosaicParams, chaos: number): MosaicParams {
   if (chaos <= 0) return p;
   return {
     ...p,
-    shift: p.shift * (1 + 2 * chaos),
-    jitter: p.jitter * (1 + 4 * chaos),
-    swap: Math.min(0.55, p.swap * (1 + 2 * chaos)),
-    zoom: Math.min(0.25, p.zoom * (1 + 2 * chaos)),
-    drop: Math.min(0.35, p.drop * (1 + 2 * chaos)),
+    shift: p.shift * (1 + 5 * chaos),
+    jitter: p.jitter * (1 + 8 * chaos),
+    swap: Math.min(0.6, p.swap * (1 + 2 * chaos)),
+    zoom: Math.min(0.3, p.zoom * (1 + 3 * chaos)),
+    drop: Math.min(0.3, p.drop * (1 + chaos)),
   };
 }
 
@@ -185,9 +185,8 @@ export function renderMosaic(
   H: number,
   base: Rgb3 | null = null,
 ): { rgba: Uint8ClampedArray; objects: Float32Array } {
-  // 変貌 beyond 0.5 (021 FR-2103): more rectangles (019's reach of the count) and wilder ones.
-  const chaos = chaosOf(c);
-  const { tiles, region } = mosaicLayout(wilderMosaic(p, chaos), obj, img, W, H, 0.5 + 0.5 * chaos);
+  // 変貌 beyond 0.5 (021 FR-2103): as many rectangles, wilder ones.
+  const { tiles, region } = mosaicLayout(wilderMosaic(p, chaosOf(c)), obj, img, W, H);
   // The ground: the photo without the subject, its hole filled with rectangles of the photo (015 FR-1504);
   // in the theme world (005), the Phase 9 picture.
   const cut = obj.source === 'estimate' ? 0.05 : 0.25;

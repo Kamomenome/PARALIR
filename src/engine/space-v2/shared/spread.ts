@@ -6,7 +6,7 @@ import { framePhoto, regionMask } from './inplace';
 import type { PhotoObject } from './object';
 
 /** A value in [0, 1) for a lattice point, from the seed (integer hash, the same everywhere). */
-function lattice(seed: number, x: number, y: number): number {
+export function lattice(seed: number, x: number, y: number): number {
   let h = (seed ^ Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1)) >>> 0;
   h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
@@ -83,4 +83,53 @@ export function spreadOver(world: Uint8ClampedArray, seed: number, obj: PhotoObj
     out[4 * i + 3] = 255;
   }
   return out;
+}
+
+/**
+ * The colours of what changed turn (021 FR-2108): each pixel's hue turned by `degrees` around the grey axis of RGB (grey
+ * stays grey) and its saturation scaled by `satK`, as much as its weight (0: as it is).
+ */
+export function turnHue(rgba: Uint8ClampedArray, weight: Float32Array, degrees: number, satK: number): Uint8ClampedArray {
+  const a = (degrees * Math.PI) / 180;
+  const cos = Math.cos(a);
+  const s3 = Math.sqrt(1 / 3) * Math.sin(a);
+  const k = (1 - cos) / 3;
+  const m = [cos + k, k - s3, k + s3, k + s3, cos + k, k - s3, k - s3, k + s3, cos + k];
+  const out = new Uint8ClampedArray(rgba.length);
+  for (let i = 0; i < weight.length; i++) {
+    const r = rgba[4 * i];
+    const g = rgba[4 * i + 1];
+    const b = rgba[4 * i + 2];
+    const w = weight[i];
+    out[4 * i + 3] = rgba[4 * i + 3];
+    if (w <= 0) {
+      out[4 * i] = r;
+      out[4 * i + 1] = g;
+      out[4 * i + 2] = b;
+      continue;
+    }
+    const tr = m[0] * r + m[1] * g + m[2] * b;
+    const tg = m[3] * r + m[4] * g + m[5] * b;
+    const tb = m[6] * r + m[7] * g + m[8] * b;
+    const l = 0.2126 * tr + 0.7152 * tg + 0.0722 * tb;
+    out[4 * i] = Math.round(r + (l + (tr - l) * satK - r) * w);
+    out[4 * i + 1] = Math.round(g + (l + (tg - l) * satK - g) * w);
+    out[4 * i + 2] = Math.round(b + (l + (tb - l) * satK - b) * w);
+  }
+  return out;
+}
+
+/**
+ * Where the picture changed (021 FR-2108): the drawn things fully, the rest a little where it is no longer the photo
+ * (the generated background, the broken parts), nothing where the photo is left as it was.
+ */
+export function changedWeight(world: Uint8ClampedArray, objects: Float32Array | null, img: RgbImage, W: number, H: number): Float32Array {
+  const photo = toDisplay(framePhoto(img, W, H), W, H, false);
+  const w = new Float32Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    const d = Math.abs(world[4 * i] - photo[4 * i]) + Math.abs(world[4 * i + 1] - photo[4 * i + 1]) + Math.abs(world[4 * i + 2] - photo[4 * i + 2]);
+    const o = objects ? clip(objects[i], 0, 1) : 0;
+    w[i] = o + (1 - o) * (d > 6 ? 0.4 : 0);
+  }
+  return w;
 }

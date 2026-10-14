@@ -109,11 +109,10 @@ export interface CopyInstance {
 }
 
 /**
- * Every placed copy (and the fan's body), scaled by `sizeK`. `chaos` (変貌 beyond 0.5, 021 FR-2103): more copies, each
- * thrown off its place and turned by its own scatter; 0 is the regular array.
+ * Every placed copy (and the fan's body), scaled by `sizeK`. `chaos` (変貌 beyond 0.5, 021 FR-2103): as many copies,
+ * each thrown off its place, turned and resized by its own scatter; 0 is the regular array.
  */
-export function copyInstances(q: CopiesParams, sizeK = 1, chaos = 0): CopyInstance[] {
-  const p = chaos > 0 && q.kind !== 'grid' ? { ...q, count: Math.min(MAX, q.count + Math.round(12 * chaos)) } : q;
+export function copyInstances(p: CopiesParams, sizeK = 1, chaos = 0): CopyInstance[] {
   const out: CopyInstance[] = [];
   const C = p.centre;
   const s = p.objectSize * sizeK;
@@ -166,13 +165,14 @@ export function copyInstances(q: CopiesParams, sizeK = 1, chaos = 0): CopyInstan
   return chaos > 0 ? out.map((c, n) => scattered(c, p, n, chaos)) : out;
 }
 
-/** A copy thrown off its place (up to two of its sizes, and in depth) and turned (up to 2.5 rad) by its own scatter. */
+/** A copy thrown off its place (up to four of its sizes, and in depth), turned (up to π) and resized (½ to 2×) by its own scatter. */
 function scattered(c: CopyInstance, p: CopiesParams, n: number, chaos: number): CopyInstance {
   const [a, b, d] = [0, 1, 2].map((j) => 2 * (p.scatter[(3 * n + j) % p.scatter.length] - 0.5));
-  const turn = 2.5 * chaos * a;
-  const reach = 2 * chaos * c.size;
+  const turn = Math.PI * chaos * a;
+  const reach = 4 * chaos * c.size;
   return {
     ...c,
+    size: c.size * 2 ** (chaos * d),
     centre: [c.centre[0] + reach * b, c.centre[1] + reach * d, c.centre[2] + 0.5 * reach * a],
     right: mix(c.right, c.up, Math.cos(turn), Math.sin(turn)),
     up: mix(c.up, c.right, Math.cos(turn), -Math.sin(turn)),

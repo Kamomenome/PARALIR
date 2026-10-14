@@ -152,16 +152,15 @@ export interface FragmentPlacement {
 const centroid = (p: Poly): [number, number] => [p.reduce((s, q) => s + q[0], 0) / p.length, p.reduce((s, q) => s + q[1], 0) / p.length];
 
 /**
- * The pieces wilder for 変貌 beyond 0.5 (021 FR-2103): more pieces, thrown further, turned and lifted more; 0 as drawn.
+ * The pieces wilder for 変貌 beyond 0.5 (021 FR-2103): as many pieces, thrown further, turned and lifted more; 0 as drawn.
  */
 export function wilderSplit(p: FragmentParams, chaos: number): FragmentParams {
   if (chaos <= 0) return p;
   return {
     ...p,
-    pieces: Math.min(MAX_PIECES, p.pieces + Math.round(4 * chaos)),
-    explode: p.explode * (1 + 3 * chaos),
-    spin: p.spin.map((v) => v * (1 + 4 * chaos)),
-    lift: p.lift.map((v) => v * (1 + 4 * chaos)),
+    explode: p.explode * (1 + 5 * chaos),
+    spin: p.spin.map((v) => v * (1 + 6 * chaos)),
+    lift: p.lift.map((v) => v * (1 + 6 * chaos)),
   };
 }
 
