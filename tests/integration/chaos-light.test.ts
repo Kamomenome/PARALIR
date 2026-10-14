@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialState, prepareSource, withSource } from '../../src/app/state';
 import { lightShapeFrom } from '../../src/engine/space-v2/shared/atmosphere';
-import { labradorite, lattice } from '../../src/engine/space-v2/shared/spread';
+import { lattice } from '../../src/engine/space-v2/shared/spread';
 import type { SpaceWorld } from '../../src/engine/space-v2/world';
 import { copyInstances } from '../../src/engine/space-v2/worlds/copies/copies';
 import { readPngRgb } from '../helpers/png';
@@ -22,23 +22,10 @@ describe('the light is round or chaotic, never straight (021 FR-2105 as changed,
   });
 });
 
-describe('the colours of what changed play like labradorite (021 FR-2108 as changed, SC-2108)', () => {
-  it('weight 0 stays; a grey surface of weight 1 turns blue in places and gold in others', () => {
-    const W = 96;
-    const H = 72;
-    const grey = new Uint8ClampedArray(W * H * 4).map((_, i) => (i % 4 === 3 ? 255 : 150));
-    const none = labradorite(grey, new Float32Array(W * H), 1234, 1, W, H);
-    expect([...none]).toEqual([...grey]);
-    const out = labradorite(grey, new Float32Array(W * H).fill(1), 1234, 1, W, H);
-    let blue = 0;
-    let gold = 0;
-    for (let i = 0; i < W * H; i++) {
-      const [r, g, b] = [out[4 * i], out[4 * i + 1], out[4 * i + 2]];
-      if (b > r + 40 && b > g) blue++;
-      if (r > b + 40 && g > b + 20) gold++;
-    }
-    expect(blue).toBeGreaterThan(0);
-    expect(gold).toBeGreaterThan(0);
+describe('変貌 does not change the colours (021 FR-2108 withdrawn, SC-2108)', () => {
+  it('there is no colouring of what changed', async () => {
+    const spread = await import('../../src/engine/space-v2/shared/spread');
+    for (const name of ['labradorite', 'changedWeight', 'turnHue']) expect(Object.keys(spread)).not.toContain(name);
   });
 });
 

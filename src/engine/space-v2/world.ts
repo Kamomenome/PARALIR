@@ -9,10 +9,10 @@ import { buildAtmosphere, renderAtmosphere, type Atmosphere } from './shared/atm
 import { finish } from './shared/backdrop';
 import { Hdr } from './shared/hdr';
 import { mainObject, mosaicObject, rangeObject } from './shared/object';
-import { changedWeight, labradorite, spreadOver } from './shared/spread';
+import { spreadOver } from './shared/spread';
 import { drawsFrom } from './draws';
 import type { SpaceSeeds } from './seeds';
-import { FIXED_LOOK, chaosOf, type SpaceControls } from './types';
+import { FIXED_LOOK, type SpaceControls } from './types';
 import { SPACE_ALGORITHM_VERSIONS } from './versions';
 import type { ComposeContext, WorldDef } from './worldDef';
 import { WORLDS } from './worlds';
@@ -40,8 +40,6 @@ export type SpaceWorld = {
   atmosphere: Atmosphere;
   /** The seed of where the world spreads over the photo below 変貌 0.5 (021 FR-2102). */
   morphSeed: number;
-  /** The seed of labradorite's colours over what changed beyond 変貌 0.5 (021 FR-2108). */
-  morphTint: number;
 } & WorldParams;
 
 export interface WorldRender {
@@ -74,12 +72,7 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
   const e = effectiveFeatures(features, FIXED_LOOK.featureInfluence);
   const s = seeds.streams;
   const hasSubject = mainObject(img, features, parts).subject;
-  const [t, cam, [m], hue] = await Promise.all([
-    drawsFrom(s.type, 'type/main', 2),
-    drawsFrom(s.camera, 'camera/main', 2),
-    drawsFrom(s.type, 'morph/seed', 1),
-    drawsFrom(s.type, 'morph/hue', 1),
-  ]);
+  const [t, cam, [m]] = await Promise.all([drawsFrom(s.type, 'type/main', 2), drawsFrom(s.camera, 'camera/main', 2), drawsFrom(s.type, 'morph/seed', 1)]);
   const fov = ((58 + 14 * cam[0]) * Math.PI) / 180;
   const ctx: ComposeContext = { seeds, features, img, fov };
   // Each world draws from its own stream, so building them together never changes their values.
@@ -92,7 +85,6 @@ export async function composeWorld(seeds: SpaceSeeds, features: ImageFeatures, i
     hasSubject,
     atmosphere,
     morphSeed: Math.floor(m * 2 ** 31),
-    morphTint: Math.floor(hue[0] * 2 ** 31),
     ...(Object.fromEntries(WORLDS.map((w, i) => [w.type, params[i]])) as WorldParams),
   };
 }
@@ -121,11 +113,8 @@ export function renderWorld(w: SpaceWorld, img: RgbImage, features: ImageFeature
     ranged: () => (range && rangeObject(img, range)) || mosaicObject(img, features, parts),
   });
   // Below 0.5 the world spreads over the photo, the rest first and the subject after (021 FR-2102); 0.5 as drawn.
-  if (c.morph < 0.5) return { rgba: spreadOver(out.rgba, w.morphSeed, obj, img, W, H, c.morph / 0.5), objects: out.objects };
-  // Beyond, the colours of what changed play like labradorite (021 FR-2108).
-  const chaos = chaosOf(c);
-  if (chaos <= 0) return out;
-  return { rgba: labradorite(out.rgba, changedWeight(out.rgba, out.objects, img, W, H), w.morphTint, chaos, W, H), objects: out.objects };
+  // Beyond, each world is wilder by itself (021 FR-2103); the colours stay (FR-2108 withdrawn).
+  return c.morph >= 0.5 ? out : { rgba: spreadOver(out.rgba, w.morphSeed, obj, img, W, H, c.morph / 0.5), objects: out.objects };
 }
 
 /** The background alone, finished like a world (for tests and comparisons). */
